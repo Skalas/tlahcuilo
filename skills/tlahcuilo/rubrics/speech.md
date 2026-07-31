@@ -46,4 +46,4 @@ Score each criterion 1–5: **5** exemplary · **4** solid, minor gaps · **3** 
 
 ## Voice note
 
-Spoken register: plain, concrete, short declaratives, no oratory. See `voices/speech.md`.
+Spoken register: plain, concrete, short declaratives, no oratory. See `<registersDir>/speech.md`.

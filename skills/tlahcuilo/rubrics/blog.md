@@ -47,6 +47,6 @@ Score each criterion 1–5: **5** exemplary · **4** solid, minor gaps · **3** 
 
 ## Voice note
 
-Pairs with `voices/blog.md`. This is the register closest to the base fingerprint — the base was
+Pairs with `<registersDir>/blog.md`. This is the register closest to the base fingerprint — the base was
 extracted from two blog posts — so the overlay is thin: keep first person, keep the dry asides,
 keep the flat admission of what broke.

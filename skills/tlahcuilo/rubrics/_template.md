@@ -31,5 +31,5 @@ turns a generic critique into a useful one.)
 
 ## Voice note
 
-Name the register (`voices/<register>.md`) that pairs with this doc-type and one line on how it
+Name the register (`<registersDir>/<register>.md`) that pairs with this doc-type and one line on how it
 differs from the base fingerprint (person, formality, structure). The voice pass reads both.

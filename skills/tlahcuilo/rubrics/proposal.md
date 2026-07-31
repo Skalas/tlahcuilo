@@ -51,4 +51,4 @@ Score each criterion 1–5: **5** exemplary · **4** solid, minor gaps · **3** 
 ## Voice note
 
 Pitch/proposal voice: persuasive but honest, `we` (the team to the backer), warm where the mission
-earns it, zero promotional slop. See `voices/proposal.md` for the register overlay applied in Step 3.
+earns it, zero promotional slop. See `<registersDir>/proposal.md` for the register overlay applied in Step 3.

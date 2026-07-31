@@ -90,7 +90,8 @@ Determine three things, asking only what you can't infer:
    exists, or when the angle is unsettled). Honor `docTypes.<type>.defaultMode`; the user can
    override per run.
 
-Load the rubric (`rubrics/<type>.md`) and the register (`voices/<register>.md`). The rubric is
+Load the rubric (`rubrics/<type>.md`, in the skill dir) and the register
+(`<voice.registersDir>/<register>.md`, resolved from the profile — expand a leading `~`). The rubric is
 the **shared standard every panelist argues against** — without it the debate has no scorecard.
 
 ---
@@ -229,7 +230,8 @@ Voice is two layers. Read both:
 1. **Base fingerprint** — `voice.fingerprint` in the profile (default
    `~/.claude/skills/writing-voice/my-voice.md`). The invariant *you*: word choices, tics,
    punctuation habits, rhythm.
-2. **Register overlay** — `voices/<register>.md` for this doc-type. The situational dial:
+2. **Register overlay** — `<voice.registersDir>/<register>.md` for this doc-type. Like the
+   fingerprint, it lives in your own layer, not in the skill. The situational dial:
    formality, person (`I` for a blog, `we`/imperative for team strategy), directness, how much
    hedging is allowed, structural density.
 
@@ -276,8 +278,12 @@ A register overlay is short (½–1 page). To build one, either:
 - **Interview** — ask the user 4–5 questions (audience, formality, I-vs-we, how blunt, how
   structured) and write the overlay from the answers.
 
-Write it to `voices/<register>.md` as a diff against the base: "same fingerprint EXCEPT …".
-Don't restate the base — only the modulations. See `voices/_template.md`.
+Write it to `<voice.registersDir>/<register>.md` as a diff against the base: "same fingerprint
+EXCEPT …". Don't restate the base — only the modulations. Start from `voices/_template.md` in the
+skill dir; that template is the only register the skill ships, because a filled-in register names
+real audiences and often quotes real copy. Write yours beside the fingerprint, never back into the
+skill dir — a skill installed from a checkout may be a symlink, and writing there puts your
+client's language into a public repo.
 
 ---
 

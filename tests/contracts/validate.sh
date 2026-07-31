@@ -18,23 +18,30 @@ done < <(grep -E '^[[:space:]]+rubric:' "$PROFILE" | awk '{print $2}')
 
 registers_dir="$(grep -E '^[[:space:]]+registersDir:' "$PROFILE" | awk '{print $2}')"
 [ -n "$registers_dir" ] || bad "profile has no voice.registersDir"
-while read -r reg; do
-  [ -f "$SKILL/$registers_dir/$reg.md" ] \
-    || bad "profile references missing register: $registers_dir/$reg.md"
-done < <(grep -E '^[[:space:]]+register:' "$PROFILE" | awk '{print $2}')
-[ "$fail" -eq 0 ] && note "✓ every enabled docType resolves to a rubric + register"
+[ "$fail" -eq 0 ] && note "✓ every enabled docType resolves to a rubric"
 
-# --- 2. rubric/register pairs are symmetric --------------------------------
-# A rubric without its register means the voice pass silently degrades to base-only
-# for that doc type — a quiet quality loss, so treat the gap as a failure.
-for r in "$SKILL"/rubrics/*.md; do
-  n="$(basename "$r" .md)"; [ "$n" = "_template" ] && continue
-  [ -f "$SKILL/$registers_dir/$n.md" ] || bad "rubric $n.md has no matching register"
-done
-for v in "$SKILL/$registers_dir"/*.md; do
+# --- 2. registers stay OUT of this repo -----------------------------------
+# A filled-in register names real audiences and quotes real copy, so only the template
+# ships. This is the check that keeps a published clone from carrying personal writing
+# data — the failure it prevents is a privacy leak, not a broken run.
+shipped=()
+for v in "$SKILL/voices"/*.md; do
   n="$(basename "$v" .md)"; [ "$n" = "_template" ] && continue
-  [ -f "$SKILL/rubrics/$n.md" ] || bad "register $n.md has no matching rubric"
+  shipped+=("$n")
 done
+if [ "${#shipped[@]}" -eq 0 ]; then
+  note "✓ voices/ ships the template only — registers live in voice.registersDir"
+else
+  bad "filled-in register(s) in voices/: ${shipped[*]} — move them to voice.registersDir"
+fi
+[ -f "$SKILL/voices/_template.md" ] || bad "voices/_template.md is missing"
+
+# The default must point OUTSIDE the skill, or a filled-in register lands back in the repo
+# (and, with a --link install, straight into git).
+case "$registers_dir" in
+  /*|~*) note "✓ registersDir default is external: $registers_dir" ;;
+  *)     bad "registersDir default '$registers_dir' is inside the skill dir — registers would be committed" ;;
+esac
 
 # --- 3. the panelist JSON contract is valid + covers every tier's seats ----
 python3 -m json.tool "$SKILL/position.schema.json" >/dev/null \

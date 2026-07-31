@@ -53,18 +53,28 @@ repo — no copy to drift, no re-install step, and `git diff` shows what a sessi
 
 ## Voice data lives outside this repo
 
-The voice pass reads two layers:
+This repo is the **engine**. Both layers of voice data it consumes are yours and stay in your own
+layer:
 
-1. **Base fingerprint** — `~/.claude/skills/writing-voice/my-voice.md`, owned by the
-   [`writing-voice`](https://github.com/Skalas/claude-kits) skill in the personal `~/.claude`
-   layer. **Not vendored here, on purpose:** it is your writing, not skill code, and it should
-   not travel with a repo you may publish.
-2. **Register overlay** — `skills/tlahcuilo/voices/<register>.md`, versioned here. Each one is a
-   short diff against the base ("same fingerprint EXCEPT …") covering person, formality,
-   hedging, and structural density for one doc type.
+1. **Base fingerprint** — `~/.claude/skills/writing-voice/my-voice.md`, produced by the
+   `writing-voice` skill. The invariant you: word choice, tics, punctuation, rhythm.
+2. **Register overlays** — `<voice.registersDir>/<register>.md`, one per doc type. A short diff
+   against the base ("same fingerprint EXCEPT …") setting person, formality, hedging, and
+   structural density. Default location is `~/.claude/skills/writing-voice/registers/`, beside
+   the fingerprint.
 
-If the fingerprint is missing, runs still work — the voice pass falls back to register-only and
-says so.
+Only `voices/_template.md` ships here. That is a deliberate boundary, not an oversight: a
+filled-in register names its real audience and usually quotes real copy — a client's proposal
+language, a named product, an actual speech — so it is personal data with the same handling
+requirements as the fingerprint. `make test` fails if a filled-in register appears in `voices/`,
+or if the profile's `registersDir` default points back inside the skill dir. With a `--link`
+install the skill dir *is* the repo, so that second check is what stops a register you write
+mid-run from landing in a public commit.
+
+Missing either layer degrades rather than breaks: no fingerprint → register-only; no register for
+the doc type → base-only, and the run tells you the piece is in your default voice rather than
+one tuned to the situation, then offers to bootstrap the register from samples or a short
+interview.
 
 ## Layout
 
@@ -75,12 +85,13 @@ skills/tlahcuilo/
   profile.template.yml  copied to .write/profile.yml on first run in a project
   position.schema.json  the JSON contract every panelist returns
   rubrics/<type>.md     the shared scorecard the panel argues from, per doc type
-  voices/<register>.md  register overlays, per doc type
+  voices/_template.md   how to write a register (the registers themselves live in your layer)
 ```
 
-Adding a doc type means adding a `rubrics/<type>.md` + `voices/<type>.md` pair and uncommenting
-the matching `docTypes.<type>` block in the profile template. `make test` fails if a `docTypes`
-entry points at a rubric or register file that does not exist, so the two never drift apart.
+Ships with rubrics for `guideline`, `proposal`, `blog`, `report`, and `speech`. Adding a doc type
+means writing `rubrics/<type>.md` from `rubrics/_template.md`, writing the matching register into
+your `registersDir`, and uncommenting the `docTypes.<type>` block in the profile template. A rubric
+is publishable — it is a scorecard of testable questions, with no client language in it.
 
 Adding a panelist means adding its start/resume/critique commands to `ADAPTERS.md` and a `panel`
 entry to the profile. Nothing else in the skill is model-specific.

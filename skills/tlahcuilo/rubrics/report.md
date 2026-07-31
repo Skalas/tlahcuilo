@@ -48,4 +48,4 @@ Score each criterion 1–5:
 ## Voice note
 
 Consulting-report voice: measured, evidence-first, `we`/impersonal — not blog musing, not
-corporate slop. See `voices/report.md` for the register overlay applied in Step 3.
+corporate slop. See `<registersDir>/report.md` for the register overlay applied in Step 3.

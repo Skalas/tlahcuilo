@@ -50,7 +50,11 @@ writer:
 voice:
   enabled: true
   fingerprint: ~/.claude/skills/writing-voice/my-voice.md   # base (invariant) voice
-  registersDir: voices               # per-doc-type overlays live here (in the skill dir)
+  # Per-doc-type overlays. Personal writing data, so they live in YOUR layer beside the
+  # fingerprint — not in the skill dir, which ships only voices/_template.md. A register
+  # names real audiences and quotes real copy; keep it wherever my-voice.md is kept.
+  # Point this anywhere (absolute, ~, or skill-relative) — resolution is the same.
+  registersDir: ~/.claude/skills/writing-voice/registers
 
 # doc-type → rubric + voice register + default mode
 docTypes:

@@ -42,4 +42,4 @@ Score each criterion 1–5:
 ## Voice note
 
 Guidelines are **not** blog voice. Imperative, direct, we/you, no discursive asides, no
-first-person musing. See `voices/guideline.md` for the register overlay applied in Step 3.
+first-person musing. See `<registersDir>/guideline.md` for the register overlay applied in Step 3.
