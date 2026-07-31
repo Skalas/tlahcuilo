@@ -81,6 +81,7 @@ if [ -f "$FINGERPRINT" ]; then
 else
   echo "▸ voice base absent: $FINGERPRINT"
   echo "    the voice pass will run register-only until the writing-voice fingerprint exists"
+  echo "    build it first with the writing-voice skill (it reads 2-3 of your samples)"
 fi
 
 # No local skills/ → fetch them from GitHub into a temp checkout.
@@ -127,6 +128,42 @@ else
   install_skills "$PROJECT/.claude/skills"
 fi
 
+# --- voice registers: prepare the home, report the gaps -------------------
+# What an installer can honestly do: create the directory, put the template where you'll
+# author, and say which doc types have no register yet. What it CANNOT do is write one — a
+# register is derived from your samples or a short interview, which is the skill's job
+# (SKILL.md → Step 0b). So this scaffolds and reports; it never fabricates a voice.
+# Keep this default in sync with voice.registersDir in profile.template.yml — the contract
+# test fails if the two drift.
+REGISTERS_DIR="${TLAHCUILO_REGISTERS_DIR:-$HOME/.claude/skills/writing-voice/registers}"
+mkdir -p "$REGISTERS_DIR"
+cp "$SRC/tlahcuilo/voices/_template.md" "$REGISTERS_DIR/_template.md"
+echo "▸ registers dir ready: $REGISTERS_DIR"
+echo "  ✓ _template.md (how to write a register) → $REGISTERS_DIR"
+
+missing=()
+present=0
+for r in "$SRC"/tlahcuilo/rubrics/*.md; do
+  t="$(basename "$r" .md)"; [ "$t" = "_template" ] && continue
+  if [ -f "$REGISTERS_DIR/$t.md" ]; then present=$((present + 1)); else missing+=("$t"); fi
+done
+total=$((present + ${#missing[@]}))
+echo "  registers: $present/$total present"
+if [ "${#missing[@]}" -gt 0 ]; then
+  echo "  no register yet for: ${missing[*]}"
+  echo "    those doc types run in your BASE voice — correct, but not tuned to the situation"
+fi
+
 echo ""
 echo "No project bootstrap needed — the skill creates .write/ and its profile on first run."
-echo "Start a run with:  /tlahcuilo   (or ask for the writing panel by name)"
+if [ "${#missing[@]}" -gt 0 ]; then
+  echo ""
+  echo "Next: build the registers you actually need. In Claude Code, run"
+  echo "    /tlahcuilo registers"
+  echo "and it will, per doc type, either read 2-3 of your past pieces of that kind or ask you"
+  echo "4-5 questions, then write the overlay to $REGISTERS_DIR."
+  echo "Build them as you need them — one register for the kind of doc you write next is enough"
+  echo "to start; there is no reason to author all $total up front."
+else
+  echo "Start a run with:  /tlahcuilo   (or ask for the writing panel by name)"
+fi

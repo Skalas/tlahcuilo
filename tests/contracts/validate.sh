@@ -57,6 +57,23 @@ for seat in $seats; do
 done
 [ -n "$seats" ] || bad "no tier panelists found in $PROFILE"
 
+# --- 3b. installer and profile agree on where registers live --------------
+# The default path is declared twice (install.sh scaffolds it, the profile resolves it). If they
+# drift, the installer prepares one directory and every run reads another — and the symptom is a
+# silent base-only voice pass, not an error.
+inst_dir="$(grep -E '^REGISTERS_DIR=' "$ROOT/install.sh" \
+  | sed 's|.*:-||; s|}"$||; s|[$]HOME|~|')"
+prof_dir="$registers_dir"
+if [ "$inst_dir" = "$prof_dir" ]; then
+  note "✓ install.sh and profile agree on registersDir ($prof_dir)"
+else
+  bad "registersDir drift — install.sh: '$inst_dir' vs profile: '$prof_dir'"
+fi
+
+# The installer seeds the template into that dir, so the template must exist to copy.
+grep -q 'voices/_template.md' "$ROOT/install.sh" \
+  || bad "install.sh no longer seeds voices/_template.md into the registers dir"
+
 # --- 4. the skill's own frontmatter ---------------------------------------
 for key in name description; do
   grep -q "^$key:" "$SKILL/SKILL.md" || bad "SKILL.md missing $key:"

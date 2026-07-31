@@ -79,6 +79,47 @@ directory is a hard shell error, not a parse fallback.
 
 ---
 
+## Step 0b — build missing registers (fresh install)
+
+Invoked as `/tlahcuilo registers` (or reached from Step 1 when the doc-type has no register),
+this step **only** authors registers — no panel, no debate, no draft. It is the half of setup a
+shell installer cannot do: a register is derived from the user's own writing, so it takes reading
+or an interview.
+
+```bash
+REG=$(grep -E '^[[:space:]]+registersDir:' .write/profile.yml | awk '{print $2}')
+REG="${REG/#\~/$HOME}"; mkdir -p "$REG"; ls "$REG"          # what already exists
+ls "$(dirname "$0")/rubrics" 2>/dev/null || true            # doc types that ship a rubric
+```
+
+Report coverage — which doc types have a register and which don't — then ask which one to build.
+**Build only what the user asks for.** Do not author all of them up front: an unused register is
+a guess about writing they haven't shown you, and a wrong register is worse than none (it drags
+the voice pass toward a register that isn't theirs).
+
+For the chosen doc type, pick a source:
+
+- **Derive from samples** (better) — ask for 2–3 past pieces of *this* kind. Read them and extract
+  how they differ from the base fingerprint: person, formality, hedging, structure, sentence
+  length, opening/closing moves. Quote nothing verbatim into the register — describe the pattern.
+- **Interview** (when no samples exist) — ask 4–5 questions: who reads this, how formal, `I` or
+  `we`, how blunt, how much scaffolding. Write the overlay from the answers and say plainly it's
+  interview-derived, so the first real run should be treated as calibration.
+
+Write it to `<registersDir>/<type>.md` following `voices/_template.md` — a diff against the base,
+never a restatement of it. Then confirm the file landed and offer the next doc type or a run.
+
+**Never write a register into the skill dir.** The install may be a symlink to a checkout, so the
+skill dir can be a git repo — and a register names its real audience and paraphrases real work.
+`registersDir` exists precisely to keep that data in the user's own layer.
+
+If the base fingerprint (`voice.fingerprint`) is missing, say so before authoring: a register is
+an *overlay*, so without the base there is nothing to diff against. Point at the `writing-voice`
+skill to build the fingerprint first, and offer to proceed with a standalone register only if the
+user declines.
+
+---
+
 ## Step 1 — frame the run
 
 Determine three things, asking only what you can't infer:
@@ -271,19 +312,10 @@ depends on a claim the draft can't support, flag the gap — don't let the model
 
 ## Voice registers — bootstrap
 
-A register overlay is short (½–1 page). To build one, either:
-- **Derive from samples** — if the user has samples of THIS kind of writing (past strategy memos,
-  proposals), read 2–3 and extract how they differ from the base fingerprint: person, formality,
-  hedging, structure, sentence length vs the blog baseline.
-- **Interview** — ask the user 4–5 questions (audience, formality, I-vs-we, how blunt, how
-  structured) and write the overlay from the answers.
-
-Write it to `<voice.registersDir>/<register>.md` as a diff against the base: "same fingerprint
-EXCEPT …". Don't restate the base — only the modulations. Start from `voices/_template.md` in the
-skill dir; that template is the only register the skill ships, because a filled-in register names
-real audiences and often quotes real copy. Write yours beside the fingerprint, never back into the
-skill dir — a skill installed from a checkout may be a symlink, and writing there puts your
-client's language into a public repo.
+See **Step 0b**. A register overlay is short (½–1 page), derived from samples or an interview,
+written to `<voice.registersDir>/<type>.md` as a diff against the base — never into the skill dir.
+Mid-run, if the doc-type has no register, offer Step 0b before the voice pass rather than silently
+falling back to base-only.
 
 ---
 

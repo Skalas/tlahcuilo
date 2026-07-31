@@ -72,9 +72,30 @@ install the skill dir *is* the repo, so that second check is what stops a regist
 mid-run from landing in a public commit.
 
 Missing either layer degrades rather than breaks: no fingerprint → register-only; no register for
-the doc type → base-only, and the run tells you the piece is in your default voice rather than
-one tuned to the situation, then offers to bootstrap the register from samples or a short
-interview.
+the doc type → base-only, and the run tells you the piece is in your default voice rather than one
+tuned to the situation.
+
+### Building your registers
+
+A fresh install ships zero registers, by definition — yours don't exist yet. The installer creates
+the directory, drops the authoring template in it, and reports coverage against the shipped
+rubrics:
+
+```
+▸ registers dir ready: ~/.claude/skills/writing-voice/registers
+  registers: 0/5 present
+  no register yet for: blog guideline proposal report speech
+```
+
+Then it hands off, because the rest isn't a shell job: a register is derived from *your* writing.
+Run `/tlahcuilo registers` and the skill will, per doc type, either read 2–3 of your past pieces of
+that kind or ask you 4–5 questions, then write the overlay to your `registersDir`. It writes only
+the doc types you ask for — an unused register is a guess about writing you haven't shown it, and a
+wrong register pulls the voice pass away from you rather than toward you. Build the one you need
+next; add others when you need them.
+
+Re-running the installer never touches a register you've written — it only refreshes the template
+and re-reports coverage. Point the whole thing elsewhere with `TLAHCUILO_REGISTERS_DIR=...`.
 
 ## Layout
 
