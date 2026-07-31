@@ -57,24 +57,30 @@ voice:
   registersDir: ~/.claude/skills/writing-voice/registers
 
 # doc-type → rubric + voice register + default mode
+# Every type here must have rubrics/<type>.md in the skill dir and <registersDir>/<register>.md
+# in your own layer. All five below ship a rubric; the registers are yours to build (Step 0b).
 docTypes:
   guideline:
     rubric: rubrics/guideline.md
-    register: guideline              # voices/guideline.md
+    register: guideline
     defaultMode: debate
     defaultTier: full                # standards others must follow → neutral moderator
-  # proposal:
-  #   rubric: rubrics/proposal.md
-  #   register: proposal
-  #   defaultMode: debate
-  # blog:
-  #   rubric: rubrics/blog.md
-  #   register: blog
-  #   defaultMode: debate
-  # general:
-  #   rubric: rubrics/general.md
-  #   register: general
-  #   defaultMode: joust
+  proposal:
+    rubric: rubrics/proposal.md
+    register: proposal
+    defaultMode: debate
+  blog:
+    rubric: rubrics/blog.md
+    register: blog
+    defaultMode: debate
+  report:
+    rubric: rubrics/report.md
+    register: report
+    defaultMode: debate
+  speech:
+    rubric: rubrics/speech.md
+    register: speech
+    defaultMode: debate
 
 output:
   workdir: .write                    # drafts, positions/, transcripts/, dissent.md

@@ -55,11 +55,11 @@ merged result sound like **you in the right register** — not like a committee.
 ## Step 0 — setup (first run)
 
 ```bash
-mkdir -p .write/positions .write/drafts .write/transcripts   # adapters redirect here; create first
+mkdir -p .write/positions/raw .write/drafts .write/transcripts  # adapters redirect here; create first
 test -f .write/profile.yml && echo "profile: present" || echo "profile: MISSING"
 for c in codex cursor-agent claude; do command -v "$c" >/dev/null && echo "found: $c"; done
 # transcripts/positions retain the FULL document + verbatim model exchange — keep them out of git:
-printf '*\n' > .write/.gitignore
+test -f .write/.gitignore || printf '*\n' > .write/.gitignore
 ```
 
 - **No profile** → copy `profile.template.yml` (beside this skill) to `.write/profile.yml`,
@@ -103,8 +103,9 @@ ls "$REG"                                                   # registers that alr
 ls "$SKILL_DIR/rubrics"                                     # doc types that ship a rubric
 ```
 
-If either `ls` comes back empty, stop and say so instead of reporting full coverage — an empty
-rubric listing means the path is wrong, not that there is nothing to build.
+An empty **registers** listing is the normal fresh state — that is what this step is for, so
+proceed. An empty **rubrics** listing is not: it means `SKILL_DIR` is wrong, so stop and say so
+rather than reporting full coverage against zero doc types.
 
 Report coverage — which doc types have a register and which don't — then ask which one to build.
 **Build only what the user asks for.** Do not author all of them up front: an unused register is
@@ -139,8 +140,8 @@ user declines.
 Determine three things, asking only what you can't infer:
 
 1. **Input** — a draft (path/inline) or a brief to generate from.
-2. **Doc-type** — `guideline`, `proposal`, `blog`, `general` (whatever `docTypes` defines).
-   Picks the **rubric** and the **voice register**.
+2. **Doc-type** — whatever `docTypes` defines. Shipped rubrics: `guideline`, `proposal`, `blog`,
+   `report`, `speech`. Picks the **rubric** and the **voice register**.
 3. **Mode** — `debate` (default when a draft exists) or `joust` (default when only a brief
    exists, or when the angle is unsettled). Honor `docTypes.<type>.defaultMode`; the user can
    override per run.
@@ -205,8 +206,12 @@ proposed changes, each tagged to a rubric criterion and a location).
 - **Codex / Cursor** — spawn read-only critique sessions via the adapters in `ADAPTERS.md`.
   Capture each session id; you will resume it next round.
 
-Persist each panelist's round-1 JSON under `.write/positions/r1.<panelist>.json` (no leading
-dot — the digest step globs `r1.*`, and a dotfile would be silently skipped).
+Persist each panelist's extracted round-1 JSON as `.write/positions/r1.<panelist>.json` — no
+leading dot, or the digest glob skips it. The digest globs **`.write/positions/r1.*.json`**, so
+every intermediate an adapter produces (event streams, CLI envelopes, prompt files) must go in
+`.write/positions/raw/` instead. Relaying a raw event stream or a prompt file back to the panel as
+if it were a position is the failure this split prevents; `ls .write/positions/` should show
+nothing but one `r<n>.<panelist>.json` per panelist per round.
 
 ### Round 2..N — rebuttals (resume sessions)
 

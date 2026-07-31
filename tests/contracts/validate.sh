@@ -9,16 +9,34 @@ fail=0
 note() { echo "  $1"; }
 bad()  { note "✗ $1"; fail=1; }
 
-# --- 1. every doc type resolves to a real rubric + register ----------------
-# Commented-out docTypes blocks are inert by design, so matching only uncommented
-# `rubric:`/`register:` lines is the whole point: an ENABLED type must resolve.
-while read -r rel; do
+# --- 1. every enabled doc type resolves to a real rubric -------------------
+# Commented-out docTypes blocks are inert by design, so matching only uncommented lines is the
+# whole point: an ENABLED type must resolve. Registers can't be checked for existence — they live
+# outside this repo by design — so the check on them is name-level: every `register:` must name a
+# doc type that ships a rubric, which catches a typo'd or stale name.
+rubrics=(); while read -r rel; do rubrics+=("$rel"); done \
+  < <(grep -E '^[[:space:]]+rubric:' "$PROFILE" | awk '{print $2}')
+# Without this guard the loop below is vacuous: a profile with every docType commented out would
+# pass "every enabled docType resolves" while offering no selectable doc type at all.
+[ "${#rubrics[@]}" -gt 0 ] || bad "profile enables no docType — nothing is selectable at runtime"
+# ${arr[@]+…} guard: on bash 3.2 (macOS default) `"${arr[@]}"` on an EMPTY array trips `set -u`
+# with "unbound variable". Reachable here — it is exactly the no-enabled-docType case above.
+for rel in ${rubrics[@]+"${rubrics[@]}"}; do
   [ -f "$SKILL/$rel" ] || bad "profile references missing rubric: $rel"
-done < <(grep -E '^[[:space:]]+rubric:' "$PROFILE" | awk '{print $2}')
+done
+
+regs=(); while read -r reg; do regs+=("$reg"); done \
+  < <(grep -E '^[[:space:]]+register:' "$PROFILE" | awk '{print $2}')
+[ "${#regs[@]}" -eq "${#rubrics[@]}" ] \
+  || bad "profile has ${#rubrics[@]} enabled rubric(s) but ${#regs[@]} register(s) — every docType needs both"
+for reg in ${regs[@]+"${regs[@]}"}; do
+  [ -f "$SKILL/rubrics/$reg.md" ] \
+    || bad "register name '$reg' matches no rubrics/$reg.md — typo, or a stale doc type"
+done
 
 registers_dir="$(grep -E '^[[:space:]]+registersDir:' "$PROFILE" | awk '{print $2}')"
 [ -n "$registers_dir" ] || bad "profile has no voice.registersDir"
-[ "$fail" -eq 0 ] && note "✓ every enabled docType resolves to a rubric"
+[ "$fail" -eq 0 ] && note "✓ all ${#rubrics[@]} enabled docTypes resolve to a rubric + a named register"
 
 # --- 2. registers stay OUT of this repo -----------------------------------
 # A filled-in register names real audiences and quotes real copy, so only the template
@@ -44,8 +62,12 @@ case "$registers_dir" in
 esac
 
 # --- 3. the panelist JSON contract is valid + covers every tier's seats ----
-python3 -m json.tool "$SKILL/position.schema.json" >/dev/null \
-  || bad "position.schema.json is not valid JSON"
+if command -v python3 >/dev/null 2>&1; then
+  python3 -m json.tool "$SKILL/position.schema.json" >/dev/null \
+    || bad "position.schema.json is not valid JSON"
+else
+  note "– python3 absent, JSON validity not checked"   # exit 127 would read as invalid JSON
+fi
 # Tiers name their seats; the schema's panelist enum must admit each one, or a
 # panelist's output fails validation the moment that tier is selected.
 seats="$(sed -n '/^tiers:/,/^[a-z]/p' "$PROFILE" \

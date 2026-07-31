@@ -3,7 +3,7 @@
 For deliverables a client **pays for and acts on**: verification reports, technical audits,
 assessment findings, consulting recommendations. The reader's test is not "was this thorough" but
 "can I trust these findings and act on them without re-doing the work." Often a mixed audience —
-technical implementers plus non-technical decision-makers (PMs, clinical leads, funders). Every
+technical implementers plus non-technical decision-makers (PMs, domain leads, funders). Every
 panelist scores against these criteria and argues from them; a position that doesn't map to a
 criterion is out of scope.
 
@@ -12,10 +12,10 @@ criterion is out of scope.
 1. **Accurate & evidenced** — Every finding is traceable to a concrete source (file:line, an
    issue, a measured number). No claim the underlying material can't support. Flag any assertion
    that reads as opinion dressed as fact, or a number with no provenance.
-2. **Clear to a mixed audience** — A clinical lead or a funder can follow the significance without
+2. **Clear to a mixed audience** — A domain lead or a funder can follow the significance without
    reading code; an engineer can act on the detail. Jargon is either explained or justified. Flag
    passages only the author's team could parse.
-3. **Severity & prioritization sound** — Findings are ranked by real clinical/operational risk,
+3. **Severity & prioritization sound** — Findings are ranked by real operational risk,
    and the ranking is justified (why is this P0 and that P2?). Flag a flat list that makes the
    reader do the triage, or a severity that doesn't match the described impact.
 4. **Actionable** — Each finding pairs with a concrete next step (fix, owner, or decision needed).

@@ -152,14 +152,18 @@ if [ "$REGISTERS_DIR" != "$REGISTERS_DEFAULT" ]; then
   echo "      registersDir: $REGISTERS_DIR"
 fi
 
+# Count over the doc types the shipped profile actually ENABLES, not over every rubric on disk:
+# a rubric with no docTypes block can't be selected at runtime, so telling the user to write a
+# register for it is busywork. The contract test keeps the two lists equal, so in practice this
+# reads every rubric — but it stays honest if that changes.
 # -s not -f: an empty file is a register someone started and abandoned. Counting it as present
 # hides the gap behind a green "5/5" while the voice pass has nothing to overlay.
 missing=()
 present=0
-for r in "$SRC"/tlahcuilo/rubrics/*.md; do
-  t="$(basename "$r" .md)"; [ "$t" = "_template" ] && continue
+while read -r t; do
+  [ -n "$t" ] || continue
   if [ -s "$REGISTERS_DIR/$t.md" ]; then present=$((present + 1)); else missing+=("$t"); fi
-done
+done < <(grep -E '^[[:space:]]+register:' "$SRC/tlahcuilo/profile.template.yml" | awk '{print $2}')
 total=$((present + ${#missing[@]}))
 echo "  registers: $present/$total present"
 if [ "${#missing[@]}" -gt 0 ]; then

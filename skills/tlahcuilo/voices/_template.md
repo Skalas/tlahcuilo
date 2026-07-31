@@ -4,7 +4,11 @@ A register is an **overlay on the base fingerprint** (`writing-voice/my-voice.md
 replacement. Write only what CHANGES for this scenario. The base still governs word choice,
 punctuation tics, and rhythm; the register dials the situational knobs below.
 
-Copy this to `voices/<name>.md` and fill each knob as a diff: "same as base EXCEPT …".
+Copy this to `<voice.registersDir>/<name>.md` — the path in your profile, by default
+`~/.claude/skills/writing-voice/registers/` — and fill each knob as a diff: "same as base
+EXCEPT …". **Not into the skill's own `voices/` dir:** that directory ships the template only,
+and on a symlinked install it is a public git repo. A filled-in register names its real
+audience and paraphrases real work, so it belongs beside your fingerprint.
 
 ## Knobs
 

@@ -95,7 +95,13 @@ wrong register pulls the voice pass away from you rather than toward you. Build 
 next; add others when you need them.
 
 Re-running the installer never touches a register you've written — it only refreshes the template
-and re-reports coverage. Point the whole thing elsewhere with `TLAHCUILO_REGISTERS_DIR=...`.
+and re-reports coverage. `--update` is an alias for a plain re-install; it changes the wording, not
+the behavior.
+
+To keep registers somewhere else, set **both** halves: `TLAHCUILO_REGISTERS_DIR=...` tells the
+installer where to scaffold, and `voice.registersDir` in `.write/profile.yml` is what every run
+actually reads. Setting only the env var scaffolds a directory nothing loads from — the installer
+warns and prints the profile line when it sees that.
 
 ## Layout
 
