@@ -61,8 +61,9 @@ done
 # The default path is declared twice (install.sh scaffolds it, the profile resolves it). If they
 # drift, the installer prepares one directory and every run reads another — and the symptom is a
 # silent base-only voice pass, not an error.
-inst_dir="$(grep -E '^REGISTERS_DIR=' "$ROOT/install.sh" \
-  | sed 's|.*:-||; s|}"$||; s|[$]HOME|~|')"
+# Read the DEFAULT, not REGISTERS_DIR — the latter is the env-override expression.
+inst_dir="$(grep -E '^REGISTERS_DEFAULT=' "$ROOT/install.sh" \
+  | sed 's|^[^=]*=||; s|"||g; s|[$]HOME|~|')"
 prof_dir="$registers_dir"
 if [ "$inst_dir" = "$prof_dir" ]; then
   note "✓ install.sh and profile agree on registersDir ($prof_dir)"

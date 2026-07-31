@@ -21,4 +21,8 @@ test: ## metadata, contract, and installer sanity
 	@out=$$(bash install.sh --help); echo "$$out" | grep -q 'install.sh' \
 		&& ! echo "$$out" | grep -q 'fetching tlahcuilo' \
 		&& echo "  ✓ local --help works and does not clone"
+	@out=$$(bash install.sh --help); \
+		if echo "$$out" | grep -qE '^(set |[A-Z_]+=)'; then \
+			echo "  ✗ --help leaks script body (line range in the -h case is off)"; exit 1; \
+		else echo "  ✓ --help prints only the header comment"; fi
 	@bash tests/contracts/validate.sh

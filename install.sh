@@ -49,7 +49,8 @@ while [ $# -gt 0 ]; do
     --project) SCOPE="project"; shift; [ $# -gt 0 ] && [[ "$1" != --* ]] && { PROJECT="$1"; shift; } ;;
     --update)  UPDATE=1; shift ;;
     --link)    LINK=1; shift ;;
-    -h|--help) { [ -r "$SELF" ] && sed -n '2,18p' "$SELF"; } || echo "usage: install.sh [--link] [--update] [--user | --project [PATH]]"; exit 0 ;;
+    # 2,16 is the header comment block — it ends at "Default scope", just before `set -euo`.
+    -h|--help) { [ -r "$SELF" ] && sed -n '2,16p' "$SELF"; } || echo "usage: install.sh [--link] [--update] [--user | --project [PATH]]"; exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 1 ;;
   esac
 done
@@ -135,17 +136,29 @@ fi
 # (SKILL.md → Step 0b). So this scaffolds and reports; it never fabricates a voice.
 # Keep this default in sync with voice.registersDir in profile.template.yml — the contract
 # test fails if the two drift.
-REGISTERS_DIR="${TLAHCUILO_REGISTERS_DIR:-$HOME/.claude/skills/writing-voice/registers}"
+REGISTERS_DEFAULT="$HOME/.claude/skills/writing-voice/registers"
+REGISTERS_DIR="${TLAHCUILO_REGISTERS_DIR:-$REGISTERS_DEFAULT}"
 mkdir -p "$REGISTERS_DIR"
 cp "$SRC/tlahcuilo/voices/_template.md" "$REGISTERS_DIR/_template.md"
 echo "▸ registers dir ready: $REGISTERS_DIR"
 echo "  ✓ _template.md (how to write a register) → $REGISTERS_DIR"
 
+# Scaffolding a custom dir is only half the job: runs resolve registers from the PROFILE, not
+# from this script. Left unsaid, the override silently produces a base-only voice pass — the
+# installer prepared one directory and every run reads another.
+if [ "$REGISTERS_DIR" != "$REGISTERS_DEFAULT" ]; then
+  echo "  ! custom location — runs read voice.registersDir from .write/profile.yml, not this env var."
+  echo "    Set it there too, or registers written here are never loaded:"
+  echo "      registersDir: $REGISTERS_DIR"
+fi
+
+# -s not -f: an empty file is a register someone started and abandoned. Counting it as present
+# hides the gap behind a green "5/5" while the voice pass has nothing to overlay.
 missing=()
 present=0
 for r in "$SRC"/tlahcuilo/rubrics/*.md; do
   t="$(basename "$r" .md)"; [ "$t" = "_template" ] && continue
-  if [ -f "$REGISTERS_DIR/$t.md" ]; then present=$((present + 1)); else missing+=("$t"); fi
+  if [ -s "$REGISTERS_DIR/$t.md" ]; then present=$((present + 1)); else missing+=("$t"); fi
 done
 total=$((present + ${#missing[@]}))
 echo "  registers: $present/$total present"

@@ -86,11 +86,25 @@ this step **only** authors registers — no panel, no debate, no draft. It is th
 shell installer cannot do: a register is derived from the user's own writing, so it takes reading
 or an interview.
 
+`SKILL_DIR` is the directory this file is in — substitute the real path, don't rely on `$0`
+(under a tool call it resolves to the shell, not the skill). It may be a symlink to a checkout;
+that's fine for reading, and Step 0b never writes there.
+
 ```bash
-REG=$(grep -E '^[[:space:]]+registersDir:' .write/profile.yml | awk '{print $2}')
-REG="${REG/#\~/$HOME}"; mkdir -p "$REG"; ls "$REG"          # what already exists
-ls "$(dirname "$0")/rubrics" 2>/dev/null || true            # doc types that ship a rubric
+SKILL_DIR=~/.claude/skills/tlahcuilo                        # ← this skill's dir
+# The profile wins when it exists; a standalone `/tlahcuilo registers` in a project that has
+# never had a run has no .write/profile.yml, so fall back to the shipped default rather than
+# resolving to the empty string (mkdir -p "" is a hard error).
+REG=$(grep -E '^[[:space:]]+registersDir:' .write/profile.yml 2>/dev/null | awk '{print $2}')
+REG="${REG:-$(grep -E '^[[:space:]]+registersDir:' "$SKILL_DIR/profile.template.yml" | awk '{print $2}')}"
+REG="${REG/#\~/$HOME}"
+mkdir -p "$REG"
+ls "$REG"                                                   # registers that already exist
+ls "$SKILL_DIR/rubrics"                                     # doc types that ship a rubric
 ```
+
+If either `ls` comes back empty, stop and say so instead of reporting full coverage — an empty
+rubric listing means the path is wrong, not that there is nothing to build.
 
 Report coverage — which doc types have a register and which don't — then ask which one to build.
 **Build only what the user asks for.** Do not author all of them up front: an unused register is
