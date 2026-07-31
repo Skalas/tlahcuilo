@@ -1,0 +1,9 @@
+# Runtime workdir — holds full documents, verbatim model exchanges, and transcripts.
+.write/
+
+# Local installs of this skill into the repo itself
+.claude/skills/
+.agents/skills/
+
+.DS_Store
+__pycache__/

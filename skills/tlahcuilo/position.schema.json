@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "tlahcuilo debate turn",
+  "description": "One panelist's output for one round. Panelists return ONLY this object.",
+  "type": "object",
+  "required": ["panelist", "round", "positions"],
+  "properties": {
+    "panelist": { "type": "string", "enum": ["claude", "claude-voice", "codex", "cursor"], "description": "claude = orchestrator-as-voice (duet/panel); claude-voice = the separate spawned voice in the full tier" },
+    "round": { "type": "integer", "minimum": 1 },
+    "positions": {
+      "type": "array",
+      "description": "New or refined positions this panelist holds against the draft.",
+      "items": {
+        "type": "object",
+        "required": ["id", "claim", "severity", "rubric_ref", "proposed_change", "location"],
+        "properties": {
+          "id": { "type": "string", "description": "Stable within this panelist, e.g. C1, C2" },
+          "claim": { "type": "string", "description": "The problem, stated as one sentence" },
+          "severity": { "type": "string", "enum": ["major", "minor", "nit"] },
+          "rubric_ref": { "type": "string", "description": "Which rubric criterion this maps to" },
+          "proposed_change": { "type": "string", "description": "The concrete fix, not just the complaint" },
+          "location": { "type": "string", "description": "Section / paragraph / quoted phrase" }
+        }
+      }
+    },
+    "rebuttals": {
+      "type": "array",
+      "description": "Round >= 2 only. Responses to other panelists' positions.",
+      "items": {
+        "type": "object",
+        "required": ["target", "stance", "argument"],
+        "properties": {
+          "target": { "type": "string", "description": "panelist:id, e.g. codex:C2" },
+          "stance": { "type": "string", "enum": ["agree", "disagree", "partial"] },
+          "argument": { "type": "string", "description": "Why. Cite the rubric or the text, not authority." }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,82 @@
+# .write/profile.yml — tlahcuilo writing-panel config
+# Copy to .write/profile.yml and fill. Keep only panelists whose CLI is installed.
+project: ""                          # optional label
+
+# Who sits on the debate panel. `claude` is the orchestrator AND a voice (no CLI spawn) in
+# duet/panel; in the `full` tier it moderates only and a spawned claude-voice takes its seat.
+# `model:` is honored — wired into the adapter commands as -m / --model (see ADAPTERS.md).
+panel:
+  - backend: claude                  # this session's own voice
+    role: voice
+  - backend: codex                   # GPT via `codex exec`
+    role: voice
+    model: ""                        # empty → omit -m (required on a ChatGPT-auth account)
+  - backend: cursor                  # Composer via cursor-agent
+    role: voice
+    model: composer-2.5
+
+# Complexity tiers — picked at the start of each run (Step 1b). The tier sets panel size,
+# rounds, and whether the orchestrator is a VOICE or a NEUTRAL MODERATOR (no vote).
+tiers:
+  duet:                              # quick; orchestrator is a voice; exchange shown inline
+    panelists: [claude, codex]       # 2 voices → "majority" == both agree (see debate.convergence)
+    orchestrator: voice
+    rounds: 2
+    relayInline: true
+  panel:                             # default for most docs; orchestrator is a voice
+    panelists: [claude, codex, cursor]
+    orchestrator: voice
+    rounds: 2
+    relayInline: false
+  full:                              # high-stakes; orchestrator moderates only, Claude voice spawned
+    panelists: [codex, cursor, claude-voice]
+    orchestrator: moderator          # casts no positions/votes
+    rounds: 3
+    relayInline: false
+
+debate:
+  # majority = >half the VOTING panelists agree. In a 2-voice tier (duet) this means BOTH —
+  # a single dissent blocks the change and it goes to the dissent log. `chair` is invalid in `full`.
+  convergence: majority              # majority | consensus (all) | chair
+  maxPositionsPerRound: 8
+
+joust:
+  scorers: all                       # all: every panelist scores every draft | orchestrator: only the orchestrator scores
+  scale: 5
+
+writer:
+  backend: claude                    # applies consensus edits / merges the winner
+
+voice:
+  enabled: true
+  fingerprint: ~/.claude/skills/writing-voice/my-voice.md   # base (invariant) voice
+  registersDir: voices               # per-doc-type overlays live here (in the skill dir)
+
+# doc-type → rubric + voice register + default mode
+docTypes:
+  guideline:
+    rubric: rubrics/guideline.md
+    register: guideline              # voices/guideline.md
+    defaultMode: debate
+    defaultTier: full                # standards others must follow → neutral moderator
+  # proposal:
+  #   rubric: rubrics/proposal.md
+  #   register: proposal
+  #   defaultMode: debate
+  # blog:
+  #   rubric: rubrics/blog.md
+  #   register: blog
+  #   defaultMode: debate
+  # general:
+  #   rubric: rubrics/general.md
+  #   register: general
+  #   defaultMode: joust
+
+output:
+  workdir: .write                    # drafts, positions/, transcripts/, dissent.md
+  isolation: worktree                # worktree | off — how write-mode (joust) calls are confined.
+                                     # worktree: run external draft calls in a throwaway git worktree.
+                                     # off: run in place + git-diff guard (git repo only). See ADAPTERS.md → Isolation.
+  keepTranscripts: true              # transcripts/positions retain the FULL doc + verbatim model
+                                     # exchange on disk. Step 0 writes .write/.gitignore so this
+                                     # never lands in git. Set false to discard after each run.
