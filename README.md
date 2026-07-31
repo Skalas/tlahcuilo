@@ -26,7 +26,7 @@ brief ─┐                                    ┌─ mode: debate → argue th
 
 ```bash
 git clone git@github.com:Skalas/tlahcuilo.git && cd tlahcuilo
-./install.sh --user          # copy into ~/.claude/skills and ~/.agents/skills
+./install.sh --user          # copy into ~/.claude/skills
 ```
 
 Or without a checkout:
@@ -36,7 +36,7 @@ curl -fsSL https://raw.githubusercontent.com/Skalas/tlahcuilo/main/install.sh | 
 ```
 
 On the machine where you **author** the skill, install with `--link` instead. That symlinks the
-checkout into the skill roots, so every edit you make while using the skill is an edit to this
+checkout into the skill root, so every edit you make while using the skill is an edit to this
 repo — no copy to drift, no re-install step, and `git diff` shows what a session changed.
 
 ```bash

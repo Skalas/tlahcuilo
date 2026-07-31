@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # Installer for the `tlahcuilo` writing-panel skill.
 #
-#   ./install.sh --user              install for Claude + Codex at user level
-#                                    (~/.claude/skills and ~/.agents/skills)
-#   ./install.sh --project [PATH]    install into a project's skill roots
-#                                    (.claude/skills and .agents/skills)
+#   ./install.sh --user              install at user level (~/.claude/skills)
+#   ./install.sh --project [PATH]    install into a project's skill root
+#                                    (.claude/skills)
 #   ./install.sh --link [--user|--project [PATH]]
 #                                    symlink the checkout instead of copying —
 #                                    for the machine you AUTHOR the skill on, so
@@ -116,14 +115,16 @@ install_skills() {  # $1 = destination skills root
 VERB="installing"; [ "$UPDATE" = 1 ] && VERB="updating"
 [ "$LINK" = 1 ] && VERB="linking"
 
+# Claude-only, unlike metate: SKILL.md declares `compatibility: claude-code` and the
+# pipeline is written around a Claude session as orchestrator (it spawns codex/cursor as
+# panelists). Installing into a Codex skill root would advertise a surface that cannot
+# actually run the skill.
 if [ "$SCOPE" = "user" ]; then
   echo "▸ $VERB tlahcuilo at USER level"
   install_skills "$HOME/.claude/skills"
-  install_skills "$HOME/.agents/skills"
 else
   echo "▸ $VERB tlahcuilo into PROJECT: $PROJECT"
   install_skills "$PROJECT/.claude/skills"
-  install_skills "$PROJECT/.agents/skills"
 fi
 
 echo ""
