@@ -56,16 +56,23 @@ while [ $# -gt 0 ]; do
 done
 
 # --- prerequisites: panelist CLIs -----------------------------------------
-# Every tier needs `codex` — without it there is no valid panel (SKILL.md, Step 1b), so
-# a missing codex is fatal. `cursor-agent` is optional: its absence only degrades
-# panel/full → duet, which the skill handles at runtime.
-if command -v codex >/dev/null 2>&1; then
-  echo "▸ prerequisite ok: codex found — every tier can run"
-else
-  echo "✗ prerequisite missing: codex (required — every tier includes it as a panelist)" >&2
-  echo "    install the Codex CLI, then re-run this installer" >&2
+# Every tier needs at least one external voice — `codex` or `grok` (SKILL.md, Step 1b).
+# Missing both is fatal. `cursor-agent` is optional: its absence only degrades
+# panel/full → duet, which the skill handles at runtime. Grok also substitutes any
+# `codex` seat when codex is missing, so a grok-only install is a valid panel.
+have_codex=0; have_grok=0
+command -v codex >/dev/null 2>&1 && have_codex=1
+command -v grok  >/dev/null 2>&1 && have_grok=1
+if [ "$have_codex" -eq 0 ] && [ "$have_grok" -eq 0 ]; then
+  echo "✗ prerequisite missing: need at least one of codex or grok (an external voice)" >&2
+  echo "    every tier requires an external voice besides Claude (SKILL.md, Step 1b)" >&2
+  echo "    install the Codex CLI or the Grok CLI, then re-run this installer" >&2
   exit 1
 fi
+[ "$have_codex" -eq 1 ] && echo "▸ prerequisite ok: codex found"
+[ "$have_grok"  -eq 1 ] && echo "▸ prerequisite ok: grok found"
+[ "$have_codex" -eq 0 ] && echo "▸ optional missing: codex — grok will sit the external-voice seat"
+[ "$have_grok"  -eq 0 ] && echo "▸ optional missing: grok — extra xAI voice, or a substitute if you run without codex"
 if command -v cursor-agent >/dev/null 2>&1; then
   echo "▸ optional ok: cursor-agent found — panel/full tiers available"
 else
@@ -118,8 +125,8 @@ VERB="installing"; [ "$UPDATE" = 1 ] && VERB="updating"
 [ "$LINK" = 1 ] && VERB="linking"
 
 # Claude-only, unlike metate: SKILL.md declares `compatibility: claude-code` and the
-# pipeline is written around a Claude session as orchestrator (it spawns codex/cursor as
-# panelists). Installing into a Codex skill root would advertise a surface that cannot
+# pipeline is written around a Claude session as orchestrator (it spawns codex/cursor/grok
+# as panelists). Installing into a Codex skill root would advertise a surface that cannot
 # actually run the skill.
 if [ "$SCOPE" = "user" ]; then
   echo "▸ $VERB tlahcuilo at USER level"

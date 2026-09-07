@@ -14,6 +14,9 @@ panel:
   - backend: cursor                  # Composer via cursor-agent
     role: voice
     model: composer-2.5
+  # - backend: grok                  # xAI via `grok`. Uncomment AND add `grok` to the
+  #   role: voice                    # tier `panelists:` you want it on. Substitutes any
+  #   model: grok-4.6                # `codex` seat automatically when `codex` is missing.
 
 # Complexity tiers — picked at the start of each run (Step 1b). The tier sets panel size,
 # rounds, and whether the orchestrator is a VOICE or a NEUTRAL MODERATOR (no vote).

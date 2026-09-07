@@ -3,10 +3,10 @@
 A multi-model writing panel, packaged as a Claude Code skill.
 
 [`metate`](https://github.com/Skalas/metate) hardens *code* by running review lenses over it.
-`tlahcuilo` hardens *prose* by making different models **argue about it**. Claude, Codex, and
-Cursor each hold a position across rounds — the orchestrating session relays their output
-verbatim, applies a convergence rule, and finishes with a register-aware voice pass so the
-merged result sounds like you rather than like a committee.
+`tlahcuilo` hardens *prose* by making different models **argue about it**. Each seated panelist
+holds a position across rounds — the orchestrating session relays their output verbatim,
+applies a convergence rule, and finishes with a register-aware voice pass so the merged result
+sounds like you rather than like a committee.
 
 ```
 brief ─┐                                    ┌─ mode: debate → argue the draft
@@ -47,7 +47,7 @@ repo — no copy to drift, no re-install step, and `git diff` shows what a sessi
 
 | | required | why |
 |---|---|---|
-| `codex` | **yes** | every tier seats it as a panelist; without it there is no valid panel |
+| `codex` or `grok` | **one of them** | every tier needs at least one external voice; grok substitutes if codex is missing |
 | `cursor-agent` | no | its absence degrades `panel`/`full` runs to the `duet` tier |
 | `claude` | implicit | the orchestrator; also spawned as a separate voice in the `full` tier |
 
@@ -139,8 +139,8 @@ and the verbatim model exchange**, so Step 0 writes `.write/.gitignore` to keep 
 the target repo's history. Set `output.keepTranscripts: false` to discard them after each run.
 
 Before the first external call the skill discloses plainly that the document and every model's
-output go to the external panelists you selected (Codex → OpenAI, Cursor → its backend) in
-addition to Claude. For a confidential draft, that is the moment to stop.
+output go to the external panelists you selected (Codex → OpenAI, Cursor → its backend,
+Grok → xAI) in addition to Claude. For a confidential draft, that is the moment to stop.
 
 ## License
 

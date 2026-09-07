@@ -5,7 +5,7 @@
   "type": "object",
   "required": ["panelist", "round", "positions"],
   "properties": {
-    "panelist": { "type": "string", "enum": ["claude", "claude-voice", "codex", "cursor"], "description": "claude = orchestrator-as-voice (duet/panel); claude-voice = the separate spawned voice in the full tier" },
+    "panelist": { "type": "string", "enum": ["claude", "claude-voice", "codex", "cursor", "grok"], "description": "claude = orchestrator-as-voice (duet/panel); claude-voice = the separate spawned voice in the full tier" },
     "round": { "type": "integer", "minimum": 1 },
     "positions": {
       "type": "array",
