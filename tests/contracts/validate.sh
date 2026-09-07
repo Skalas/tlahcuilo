@@ -100,6 +100,22 @@ grep -q 'panelists: \[claude, grok\]' "$PROFILE" \
   || bad "shipped duet is not Claude + Grok"
 [ "$fail" -eq 0 ] && note "✓ grok is the shipped default external voice (schema, adapter, skill, installer, profile)"
 
+# --- 3d. claude is a configurable spawned voice, not only the orchestrator --
+# Claude used to be hardcoded as "this session". If the spawn path disappears,
+# a Grok-orchestrated duet cannot seat Claude. If claude-voice is described as
+# full-tier-only, you cannot seat an independent Claude voice in duet/panel.
+grep -q '### In-session vs spawn' "$SKILL/ADAPTERS.md" \
+  || bad "ADAPTERS.md is missing the In-session vs spawn rule"
+grep -q 'claude-voice` always spawns' "$SKILL/ADAPTERS.md" \
+  || bad "ADAPTERS.md no longer treats claude-voice as always-spawned"
+grep -q 'CLAUDE_MODEL' "$SKILL/ADAPTERS.md" \
+  || bad "spawned Claude adapter does not honor profile model:"
+grep -q 'command -v claude' "$ROOT/install.sh" \
+  || bad "install.sh does not detect the claude CLI (needed to spawn Claude)"
+grep -A3 'backend: claude' "$PROFILE" | grep -q 'model:' \
+  || bad "profile claude panelist has no model: field"
+[ "$fail" -eq 0 ] && note "✓ claude is a configurable voice (in-session or spawned)"
+
 # --- 3b. installer and profile agree on where registers live --------------
 # The default path is declared twice (install.sh scaffolds it, the profile resolves it). If they
 # drift, the installer prepares one directory and every run reads another — and the symptom is a

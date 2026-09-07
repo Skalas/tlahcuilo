@@ -13,6 +13,26 @@ Three call shapes:
   Continuity is the point: the model argues against the actual prior exchange.
 - **draft / merge** (joust, or the `writer` backend) — WRITE mode, to an isolated file.
 
+### In-session vs spawn
+
+The orchestrator is **this session**, whichever harness is running the skill (Claude Code or
+Grok). It is not always a Claude voice.
+
+A seated panelist whose backend **matches this harness** is the in-session voice when
+`orchestrator: voice` — write its positions in this transcript, do not spawn. Every other
+seat is spawned via the adapter below.
+
+| this harness | matching seat | in-session when `orchestrator: voice` |
+|---|---|---|
+| Claude Code | `claude` | yes — `"panelist":"claude"` |
+| Grok | `grok` | yes — `"panelist":"grok"` |
+
+The seat **`claude-voice` always spawns** (`claude -p`), even when this session is Claude.
+That is the `full`-tier bias control (referee is not a player), and it is how you seat a
+Claude voice that is independent of the orchestrator in any tier.
+
+The in-session voice does not need its CLI installed. A spawned seat does.
+
 Always tell each panelist: *"Respond with ONLY a JSON object matching this schema. No prose
 outside the JSON."* Then parse with `jq`. Extracted positions go in `.write/positions/`;
 every intermediate (prompt files, event streams, CLI envelopes) goes in `.write/positions/raw/`.
@@ -80,47 +100,48 @@ Rules:
 
 ---
 
-## claude — voice and/or moderator
+## claude — Anthropic voice
 
-Two configurations, set by the complexity tier:
+`$CLAUDE_MODEL` = the panelist's `model:` in the profile (empty → omit `--model`; the account
+default is used). `$SEAT` is the tier seat: `claude` or `claude-voice` (see In-session vs spawn).
 
-- **duet / panel — orchestrator is a voice.** Claude is this orchestrator session. Write Claude's
-  positions/rebuttals **directly** as JSON in the transcript with `"panelist":"claude"` — do not
-  shell out to `claude -p` for the orchestrator's own voice (wasteful; it already has full context).
-- **full — neutral moderator + spawned voice.** The orchestrator moderates only (relays verbatim,
-  applies the convergence rule, casts no positions). Claude's *voice* becomes a separate,
-  independent `claude -p` session on equal footing with the other voices, self-reporting
-  `"panelist":"claude-voice"`:
+- **In-session** — this harness is Claude, `orchestrator: voice`, seat is `claude`. Write
+  positions/rebuttals **directly** as JSON with `"panelist":"claude"`. Do not spawn.
+- **Spawned** — seat is `claude-voice`, or `orchestrator: moderator`, or this harness is not
+  Claude. `claude -p`, self-reporting `"panelist":"$SEAT"`. The `full` tier seats `claude-voice`
+  so the moderator is not also a player; seat `claude-voice` in any tier to get a Claude voice
+  independent of the orchestrator.
 
-  ```bash
-  # round 1: read-only critique. Prompt goes to a FILE first (see Verbatim relay → never
-  # interpolate): it embeds the rubric and the draft, both untrusted as shell input.
-  # --output-format json wraps the reply: message in .result, id in .session_id.
-  claude -p --output-format json \
-    "$(cat .write/positions/raw/r1.claude-voice.prompt.txt)" \
-    > .write/positions/raw/r1.claude-voice.json 2>/dev/null
-  SID_CLAUDE="$(jq -r '.session_id' .write/positions/raw/r1.claude-voice.json)"
-  jq -r '.result' .write/positions/raw/r1.claude-voice.json \
-    | sed -n '/^{/,$p' | sed '/^```/d' > .write/positions/r1.claude-voice.json
-  # rebuttal (round 2+): resume the SAME session with the verbatim digest of the OTHER voices.
-  # The digest is panelist-controlled text — file, never inline.
-  claude -p --resume "$SID_CLAUDE" --output-format json \
-    "$(cat .write/positions/raw/r2.claude-voice.prompt.txt)" \
-    > .write/positions/raw/r2.claude-voice.json 2>/dev/null
-  jq -r '.result' .write/positions/raw/r2.claude-voice.json \
-    | sed -n '/^{/,$p' | sed '/^```/d' > .write/positions/r2.claude-voice.json
-  ```
+```bash
+# critique (round 1): READ-ONLY. Prompt goes to a FILE first (see Verbatim relay).
+# --output-format json wraps the reply: message in .result, id in .session_id.
+# $SEAT is claude-voice (always-spawned) or claude (spawned from a non-Claude harness).
+claude -p --output-format json ${CLAUDE_MODEL:+--model "$CLAUDE_MODEL"} \
+  "$(cat .write/positions/raw/r1.$SEAT.prompt.txt)" \
+  > .write/positions/raw/r1.$SEAT.json 2>/dev/null
+SID_CLAUDE="$(jq -r '.session_id' .write/positions/raw/r1.$SEAT.json)"
+jq -r '.result' .write/positions/raw/r1.$SEAT.json \
+  | sed -n '/^{/,$p' | sed '/^```/d' > .write/positions/r1.$SEAT.json
 
-  Keeping the voice blind to the moderator's reasoning is the whole point — it removes the
-  referee-is-a-player bias while preserving "Claude vs Codex."
+# rebuttal (round 2+): resume the SAME session with the verbatim digest of the OTHER voices.
+claude -p --resume "$SID_CLAUDE" --output-format json ${CLAUDE_MODEL:+--model "$CLAUDE_MODEL"} \
+  "$(cat .write/positions/raw/r2.$SEAT.prompt.txt)" \
+  > .write/positions/raw/r2.$SEAT.json 2>/dev/null
+jq -r '.result' .write/positions/raw/r2.$SEAT.json \
+  | sed -n '/^{/,$p' | sed '/^```/d' > .write/positions/r2.$SEAT.json
 
-  ⚠️ **The spawned voice is critique/rebuttal ONLY — never a writer.** Never invoke it with
-  `--dangerously-skip-permissions` (metate's IMPLEMENTERS.md documents that flag for autonomous
-  *builds*; it does not belong on a read-only panelist). If a future `writer`-role claude backend
-  is ever added, it must use scoped permissions + worktree isolation, not the autonomous-build flag.
-  Filename convention: extracted positions go to `.write/positions/r<n>.<panelist>.json` (no leading
-  dot, so the digest glob catches them); every intermediate — event stream, CLI envelope, prompt
-  file — goes to `.write/positions/raw/`, which the digest glob must never reach.
+# draft (joust): WRITE mode, only when Claude is spawned. Never --dangerously-skip-permissions
+# (that flag is for autonomous builds; it does not belong on a panelist). Under
+# isolation:worktree, create the tree and run from there (see Isolation).
+claude -p --output-format json ${CLAUDE_MODEL:+--model "$CLAUDE_MODEL"} \
+  "$(cat .write/positions/raw/draft.$SEAT.prompt.txt)" \
+  > .write/drafts/.$SEAT.log 2>/dev/null
+```
+
+⚠️ **A spawned Claude critique/rebuttal must not write.** Do not pass
+`--dangerously-skip-permissions`. Filename convention: extracted positions go to
+`.write/positions/r<n>.<panelist>.json` (no leading dot, so the digest glob catches them);
+every intermediate — CLI envelope, prompt file — goes to `.write/positions/raw/`.
 
 ## codex — GPT voice  ✅ verified on codex-cli 0.144.5 (duet smoke test)
 
@@ -210,6 +231,9 @@ schema-matching JSON both rounds (`--output-format json` is the reliability guar
 
 ## grok — xAI voice  ✅ verified on grok (grok.com auth, grok-4.6) — duet smoke test
 
+When this harness is Grok, `orchestrator: voice`, and grok is seated, write in-session
+(`"panelist":"grok"`) — the commands below are the spawned path (see In-session vs spawn).
+
 Grok is the least fragile of the external backends: a single-object JSON envelope (no event
 stream), a native `--prompt-file` flag, and `--json-schema` for constrained output. Two
 consequences:
@@ -292,7 +316,7 @@ embeds unfiltered panelist text without the inert-data rule (SKILL.md → Synthe
 | backend | critique (read-only, JSON) | resume carries state | notes |
 |---|---|---|---|
 | codex  | ✅ verified (cli 0.144.5)   | ✅ verified (duet smoke) | round1 `--json` events; resume = bare message; id on `thread.started`.`thread_id` |
-| claude | ⚠️ documented, not run here | ⚠️ `--resume` documented   | in-context for duet/panel; spawned `claude -p` only in `full` |
+| claude | ⚠️ documented, not run here | ⚠️ `--resume` documented   | in-session when this harness is Claude; else `claude -p`. `claude-voice` always spawns |
 | cursor | ✅ verified (2026.07.09)     | ✅ verified (cited own r1 ids) | needs `--trust` + `--workspace` headless; msg in `.result`; single-object envelope |
 | grok   | ✅ verified (grok-4.6)       | ✅ verified (recalled prior turn verbatim) | `--prompt-file` (not with `-p`); msg in `.text`, id in `.sessionId`; same shape on resume; `--json-schema` supported |
 

@@ -2,12 +2,14 @@
 # Copy to .write/profile.yml and fill. Keep only panelists whose CLI is installed.
 project: ""                          # optional label
 
-# Who sits on the debate panel. `claude` is the orchestrator AND a voice (no CLI spawn) in
-# duet/panel; in the `full` tier it moderates only and a spawned claude-voice takes its seat.
-# `model:` is honored — wired into the adapter commands as -m / --model (see ADAPTERS.md).
+# Who sits on the debate panel. A matching-harness seat is in-session when
+# `orchestrator: voice` (see ADAPTERS.md → In-session vs spawn). `claude-voice` always
+# spawns via `claude -p` — that is how you get a Claude voice independent of the
+# orchestrator. `model:` is honored as -m / --model when the seat is spawned.
 panel:
-  - backend: claude                  # this session's own voice
-    role: voice
+  - backend: claude                  # Anthropic. In-session if this harness is Claude;
+    role: voice                      # spawned (`claude -p`) otherwise. Seat as `claude`
+    model: ""                        # or `claude-voice` (always spawned). empty → omit --model
   - backend: grok                    # xAI via `grok` — default external voice
     role: voice
     model: grok-4.6
@@ -31,7 +33,7 @@ tiers:
     orchestrator: voice
     rounds: 2
     relayInline: false
-  full:                              # high-stakes; orchestrator moderates only, Claude voice spawned
+  full:                              # high-stakes; orchestrator moderates only; Claude always spawned
     panelists: [grok, cursor, claude-voice]
     orchestrator: moderator          # casts no positions/votes
     rounds: 3
@@ -48,7 +50,7 @@ joust:
   scale: 5
 
 writer:
-  backend: claude                    # applies consensus edits / merges the winner
+  backend: claude                    # the orchestrator session applies edits — not a spawned panelist
 
 voice:
   enabled: true

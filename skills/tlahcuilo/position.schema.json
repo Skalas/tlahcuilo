@@ -5,7 +5,7 @@
   "type": "object",
   "required": ["panelist", "round", "positions"],
   "properties": {
-    "panelist": { "type": "string", "enum": ["claude", "claude-voice", "codex", "cursor", "grok"], "description": "claude = orchestrator-as-voice (duet/panel); claude-voice = the separate spawned voice in the full tier" },
+    "panelist": { "type": "string", "enum": ["claude", "claude-voice", "codex", "cursor", "grok"], "description": "claude = Claude seat (in-session when this harness is Claude, else spawned); claude-voice = always-spawned claude -p, independent of the orchestrator" },
     "round": { "type": "integer", "minimum": 1 },
     "positions": {
       "type": "array",

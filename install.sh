@@ -73,6 +73,11 @@ fi
 [ "$have_codex" -eq 1 ] && echo "▸ prerequisite ok: codex found"
 [ "$have_grok"  -eq 0 ] && echo "▸ optional missing: grok — codex will sit the external-voice seat"
 [ "$have_codex" -eq 0 ] && echo "▸ optional missing: codex — extra GPT voice, or a substitute if you run without grok"
+if command -v claude >/dev/null 2>&1; then
+  echo "▸ optional ok: claude found — can spawn a Claude voice from a non-Claude orchestrator"
+else
+  echo "▸ optional missing: claude — a non-Claude orchestrator cannot seat a spawned Claude voice"
+fi
 if command -v cursor-agent >/dev/null 2>&1; then
   echo "▸ optional ok: cursor-agent found — panel/full tiers available"
 else
@@ -124,10 +129,9 @@ install_skills() {  # $1 = destination skills root
 VERB="installing"; [ "$UPDATE" = 1 ] && VERB="updating"
 [ "$LINK" = 1 ] && VERB="linking"
 
-# Claude-only, unlike metate: SKILL.md declares `compatibility: claude-code` and the
-# pipeline is written around a Claude session as orchestrator (it spawns codex/cursor/grok
-# as panelists). Installing into a Codex skill root would advertise a surface that cannot
-# actually run the skill.
+# Installs into the Claude skill root. The skill runs as orchestrator in Claude Code or
+# Grok (compatibility lists both); Grok already loads ~/.claude/skills. Installing into a
+# Codex skill root would advertise a surface that cannot actually run the skill.
 if [ "$SCOPE" = "user" ]; then
   echo "▸ $VERB tlahcuilo at USER level"
   install_skills "$HOME/.claude/skills"

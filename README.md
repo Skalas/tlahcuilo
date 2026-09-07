@@ -49,7 +49,7 @@ repo — no copy to drift, no re-install step, and `git diff` shows what a sessi
 |---|---|---|
 | `grok` or `codex` | **one of them** | every tier needs at least one external voice; default is grok, codex substitutes if grok is missing |
 | `cursor-agent` | no | its absence degrades `panel`/`full` runs to the `duet` tier |
-| `claude` | implicit | the orchestrator; also spawned as a separate voice in the `full` tier |
+| `claude` | no | in-session when this harness is Claude; spawned via `claude -p` otherwise (`claude-voice` always spawns) |
 
 ## Voice data lives outside this repo
 
@@ -140,7 +140,8 @@ the target repo's history. Set `output.keepTranscripts: false` to discard them a
 
 Before the first external call the skill discloses plainly that the document and every model's
 output go to the external panelists you selected (Codex → OpenAI, Cursor → its backend,
-Grok → xAI) in addition to Claude. For a confidential draft, that is the moment to stop.
+Grok → xAI, Claude → Anthropic) in addition to this session. For a confidential draft,
+that is the moment to stop.
 
 ## License
 
