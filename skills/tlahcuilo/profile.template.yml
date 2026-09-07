@@ -8,31 +8,31 @@ project: ""                          # optional label
 panel:
   - backend: claude                  # this session's own voice
     role: voice
-  - backend: codex                   # GPT via `codex exec`
+  - backend: grok                    # xAI via `grok` — default external voice
     role: voice
-    model: ""                        # empty → omit -m (required on a ChatGPT-auth account)
+    model: grok-4.6
   - backend: cursor                  # Composer via cursor-agent
     role: voice
     model: composer-2.5
-  # - backend: grok                  # xAI via `grok`. Uncomment AND add `grok` to the
-  #   role: voice                    # tier `panelists:` you want it on. Substitutes any
-  #   model: grok-4.6                # `codex` seat automatically when `codex` is missing.
+  # - backend: codex                 # GPT via `codex exec`. Uncomment AND add `codex` to
+  #   role: voice                    # the tier `panelists:` you want it on. Substitutes any
+  #   model: ""                      # `grok` seat automatically when `grok` is missing.
 
 # Complexity tiers — picked at the start of each run (Step 1b). The tier sets panel size,
 # rounds, and whether the orchestrator is a VOICE or a NEUTRAL MODERATOR (no vote).
 tiers:
   duet:                              # quick; orchestrator is a voice; exchange shown inline
-    panelists: [claude, codex]       # 2 voices → "majority" == both agree (see debate.convergence)
+    panelists: [claude, grok]        # 2 voices → "majority" == both agree (see debate.convergence)
     orchestrator: voice
     rounds: 2
     relayInline: true
   panel:                             # default for most docs; orchestrator is a voice
-    panelists: [claude, codex, cursor]
+    panelists: [claude, grok, cursor]
     orchestrator: voice
     rounds: 2
     relayInline: false
   full:                              # high-stakes; orchestrator moderates only, Claude voice spawned
-    panelists: [codex, cursor, claude-voice]
+    panelists: [grok, cursor, claude-voice]
     orchestrator: moderator          # casts no positions/votes
     rounds: 3
     relayInline: false

@@ -4,7 +4,7 @@ version: 0.1.0
 description: |
   Multi-model writing pipeline. Takes a brief or a draft (proposals, strategy
   docs, guidelines, blog posts) through a genuine debate between different
-  models — Claude, Codex, Cursor, and Grok argue and rebut across rounds — then
+  models — Claude, Grok, Cursor, and Codex argue and rebut across rounds — then
   synthesizes the agreed changes and finishes with a register-aware voice pass.
   Two modes: `debate` (draft, then argue it) and `joust` (competing drafts,
   then judge). Reuses the writing-voice fingerprint. Config in `.write/profile.yml`.
@@ -38,7 +38,7 @@ brief ─┐                                    ┌─ mode: debate → argue th
        ├─ draft (yours or Claude's) ────────┤
        │                                     └─ mode: joust  → models draft, then judge
        ▼
-  DEBATE ROUNDS (Claude ⇄ Codex ⇄ Cursor, rebuttals)
+  DEBATE ROUNDS (Claude ⇄ Grok ⇄ Cursor, rebuttals)
        ▼
   SYNTHESIZE (apply consensus, record dissent)
        ▼
@@ -65,9 +65,9 @@ test -f .write/.gitignore || printf '*\n' > .write/.gitignore
 - **No profile** → copy `profile.template.yml` (beside this skill) to `.write/profile.yml`,
   then fill it by autodetecting and confirming with the user (which models are installed,
   which doc-types they write, where the voice fingerprint lives). Keep only panelists whose
-  CLI is installed. `claude` is always present (it's the orchestrator). If `grok` is installed,
-  offer to uncomment it and add it to the tier seats the user wants; if `codex` is missing and
-  `grok` is present, write grok into every Codex seat so the shipped tiers stay valid.
+  CLI is installed. `claude` is always present (it's the orchestrator). The shipped default
+  external voice is `grok`; if `grok` is missing and `codex` is present, write codex into every
+  Grok seat so the shipped tiers stay valid.
 - **No voice register for the doc-type** → the voice pass falls back to base-only and flags it;
   offer to bootstrap a register (see **Voice registers** below).
 - **External-provider disclosure** — before the first external call, tell the user plainly:
@@ -165,12 +165,12 @@ The table shows the **shipped defaults**; the running config is whatever `.write
 
 | Tier | Panel | Orchestrator role | Rounds | When |
 |---|---|---|---|---|
-| **duet** | Claude (voice) + Codex | voice **and** moderator | 2 | quick pieces; you want to watch two minds disagree |
-| **panel** | Claude (voice) + Codex + Cursor | voice **and** moderator | 2 | most real docs |
-| **full** | Codex + Cursor + Claude-voice (spawned `claude -p`) | **neutral moderator, no vote** | 3 | high-stakes: strategy, standards others must follow |
+| **duet** | Claude (voice) + Grok | voice **and** moderator | 2 | quick pieces; you want to watch two minds disagree |
+| **panel** | Claude (voice) + Grok + Cursor | voice **and** moderator | 2 | most real docs |
+| **full** | Grok + Cursor + Claude-voice (spawned `claude -p`) | **neutral moderator, no vote** | 3 | high-stakes: strategy, standards others must follow |
 
-Grok can sit any Codex seat — when the profile seats it, or automatically when `codex` is missing
-and `grok` is installed. The table is the shipped default, not the only legal roster.
+Codex can sit any Grok seat — when the profile seats it, or automatically when `grok` is missing
+and `codex` is installed. The table is the shipped default, not the only legal roster.
 
 (Read the exact panel/rounds/role from `tiers.<tier>` in the profile — `orchestrator: voice` vs
 `orchestrator: moderator` is the field that decides bias control below.)
@@ -190,11 +190,11 @@ Two rules the tier enforces:
 Only offer panelists whose CLI is installed. **Every tier needs at least one external voice**
 (`codex` or `grok`) — Claude alone is not a debate. If neither CLI is installed there is no
 valid tier, so stop and tell the user. `full` and `panel` additionally need `cursor-agent`; if
-only cursor is missing, degrade to **`duet`** (Claude + whichever of Codex/Grok is installed)
+only cursor is missing, degrade to **`duet`** (Claude + Grok, or Codex if Grok is missing)
 and say so. Do not degrade `full` → `panel`: both need cursor plus an external voice, so it
 fixes nothing.
 
-If the profile seats `codex` but that CLI is missing and `grok` is present, substitute `grok`
+If the profile seats `grok` but that CLI is missing and `codex` is present, substitute `codex`
 into that seat for this run (and the other way around) and say so. Do not silently drop a
 seated panelist.
 
@@ -369,8 +369,8 @@ guideline rubric weights enforceability and edge-cases. Don't reuse one generic 
 ## Cost note
 
 True-dialogue debate with 3 panelists over 2 rounds = ~6 model calls plus synthesis and the voice
-pass. That's real spend. For a quick pass, use the `duet` tier (Claude + Codex or Grok) or lower
-a tier's `rounds` to 1 in the profile. Say so in the output when you cap coverage — silent
+pass. That's real spend. For a quick pass, use the `duet` tier (Claude + Grok) or lower a
+tier's `rounds` to 1 in the profile. Say so in the output when you cap coverage — silent
 truncation reads as "the whole panel weighed in" when it didn't.
 
 ## Adapters

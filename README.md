@@ -13,7 +13,7 @@ brief ─┐                                    ┌─ mode: debate → argue th
        ├─ draft (yours or Claude's) ────────┤
        │                                    └─ mode: joust  → models draft, then judge
        ▼
-  DEBATE ROUNDS (Claude ⇄ Codex ⇄ Cursor, rebuttals)
+  DEBATE ROUNDS (Claude ⇄ Grok ⇄ Cursor, rebuttals)
        ▼
   SYNTHESIZE (apply consensus, record dissent)
        ▼
@@ -47,7 +47,7 @@ repo — no copy to drift, no re-install step, and `git diff` shows what a sessi
 
 | | required | why |
 |---|---|---|
-| `codex` or `grok` | **one of them** | every tier needs at least one external voice; grok substitutes if codex is missing |
+| `grok` or `codex` | **one of them** | every tier needs at least one external voice; default is grok, codex substitutes if grok is missing |
 | `cursor-agent` | no | its absence degrades `panel`/`full` runs to the `duet` tier |
 | `claude` | implicit | the orchestrator; also spawned as a separate voice in the `full` tier |
 

@@ -56,23 +56,23 @@ while [ $# -gt 0 ]; do
 done
 
 # --- prerequisites: panelist CLIs -----------------------------------------
-# Every tier needs at least one external voice — `codex` or `grok` (SKILL.md, Step 1b).
-# Missing both is fatal. `cursor-agent` is optional: its absence only degrades
-# panel/full → duet, which the skill handles at runtime. Grok also substitutes any
-# `codex` seat when codex is missing, so a grok-only install is a valid panel.
+# Every tier needs at least one external voice — `grok` or `codex` (SKILL.md, Step 1b).
+# The shipped default is grok. Missing both is fatal. `cursor-agent` is optional: its
+# absence only degrades panel/full → duet, which the skill handles at runtime. Codex
+# substitutes any `grok` seat when grok is missing, so a codex-only install is a valid panel.
 have_codex=0; have_grok=0
 command -v codex >/dev/null 2>&1 && have_codex=1
 command -v grok  >/dev/null 2>&1 && have_grok=1
 if [ "$have_codex" -eq 0 ] && [ "$have_grok" -eq 0 ]; then
-  echo "✗ prerequisite missing: need at least one of codex or grok (an external voice)" >&2
-  echo "    every tier requires an external voice besides Claude (SKILL.md, Step 1b)" >&2
-  echo "    install the Codex CLI or the Grok CLI, then re-run this installer" >&2
+  echo "✗ prerequisite missing: need at least one of grok or codex (an external voice)" >&2
+  echo "    every tier needs an external voice besides Claude (SKILL.md, Step 1b)" >&2
+  echo "    install the Grok CLI or the Codex CLI, then re-run this installer" >&2
   exit 1
 fi
+[ "$have_grok"  -eq 1 ] && echo "▸ prerequisite ok: grok found — default external voice"
 [ "$have_codex" -eq 1 ] && echo "▸ prerequisite ok: codex found"
-[ "$have_grok"  -eq 1 ] && echo "▸ prerequisite ok: grok found"
-[ "$have_codex" -eq 0 ] && echo "▸ optional missing: codex — grok will sit the external-voice seat"
-[ "$have_grok"  -eq 0 ] && echo "▸ optional missing: grok — extra xAI voice, or a substitute if you run without codex"
+[ "$have_grok"  -eq 0 ] && echo "▸ optional missing: grok — codex will sit the external-voice seat"
+[ "$have_codex" -eq 0 ] && echo "▸ optional missing: codex — extra GPT voice, or a substitute if you run without grok"
 if command -v cursor-agent >/dev/null 2>&1; then
   echo "▸ optional ok: cursor-agent found — panel/full tiers available"
 else

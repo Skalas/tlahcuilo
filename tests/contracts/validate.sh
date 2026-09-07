@@ -79,12 +79,11 @@ for seat in $seats; do
 done
 [ -n "$seats" ] || bad "no tier panelists found in $PROFILE"
 
-# --- 3c. grok is a first-class panelist -----------------------------------
-# Grok can sit any external-voice seat. If the schema rejects it, a grok turn fails
-# validation. If SKILL.md still hard-requires codex, a grok-only install has no valid
-# tier. If install.sh still exits 1 on missing-codex alone, the installer contradicts
-# Step 1b. The profile must ship a grok entry (commented is fine) so seating it is a
-# config change, not a skill edit.
+# --- 3c. grok is the shipped default external voice -----------------------
+# Shipped duet is Claude + Grok. If the schema rejects grok, a grok turn fails
+# validation. If SKILL.md still hard-requires a named CLI, a grok-only (or
+# codex-only) install has no valid tier. If install.sh still exits 1 on missing
+# grok alone, a codex-only install cannot substitute.
 grep -q '"grok"' "$SKILL/position.schema.json" \
   || bad "grok missing from position.schema.json panelist enum"
 grep -q '^## grok' "$SKILL/ADAPTERS.md" \
@@ -93,11 +92,13 @@ grep -q 'Every tier requires' "$SKILL/SKILL.md" \
   && bad "SKILL.md still hard-requires a named CLI for every tier — grok-only installs have no valid tier"
 grep -q 'command -v grok' "$ROOT/install.sh" \
   || bad "install.sh does not detect grok"
-grep -q 'codex or grok' "$ROOT/install.sh" \
-  || bad "install.sh fatal path does not admit grok as a substitute for codex"
+grep -Eq 'grok or codex|codex or grok' "$ROOT/install.sh" \
+  || bad "install.sh fatal path does not admit grok or codex as the external voice"
 grep -q 'backend: grok' "$PROFILE" \
   || bad "profile.template.yml has no grok panel entry"
-[ "$fail" -eq 0 ] && note "✓ grok is a first-class panelist (schema, adapter, skill, installer, profile)"
+grep -q 'panelists: \[claude, grok\]' "$PROFILE" \
+  || bad "shipped duet is not Claude + Grok"
+[ "$fail" -eq 0 ] && note "✓ grok is the shipped default external voice (schema, adapter, skill, installer, profile)"
 
 # --- 3b. installer and profile agree on where registers live --------------
 # The default path is declared twice (install.sh scaffolds it, the profile resolves it). If they
