@@ -143,6 +143,19 @@ grep -q 'Keep only panelists whose CLI is installed' "$PROFILE" \
   && bad "profile header still tells Step 0 to drop missing CLIs"
 [ "$fail" -eq 0 ] && note "✓ claude is a configurable voice (in-session or spawned)"
 
+# --- 3e. installer covers Claude, Codex, and Cursor skill roots -----------
+# Codex and Cursor will not see a skill that only lands in ~/.claude/skills.
+# Grok already loads that root, so a fourth copy is not required.
+grep -q 'HOME/.codex/skills' "$ROOT/install.sh" \
+  || bad "install.sh does not install into ~/.codex/skills"
+grep -q 'HOME/.cursor/skills' "$ROOT/install.sh" \
+  || bad "install.sh does not install into ~/.cursor/skills"
+grep -q 'PROJECT/.codex/skills' "$ROOT/install.sh" \
+  || bad "install.sh --project does not install into .codex/skills"
+grep -q 'PROJECT/.cursor/skills' "$ROOT/install.sh" \
+  || bad "install.sh --project does not install into .cursor/skills"
+[ "$fail" -eq 0 ] && note "✓ installer targets Claude, Codex, and Cursor skill roots"
+
 # --- 3b. installer and profile agree on where registers live --------------
 # The default path is declared twice (install.sh scaffolds it, the profile resolves it). If they
 # drift, the installer prepares one directory and every run reads another — and the symptom is a

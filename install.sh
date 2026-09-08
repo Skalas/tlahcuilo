@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Installer for the `tlahcuilo` writing-panel skill.
 #
-#   ./install.sh --user              install at user level (~/.claude/skills)
-#   ./install.sh --project [PATH]    install into a project's skill root
-#                                    (.claude/skills)
+#   ./install.sh --user              install at user level for Claude, Codex, Cursor
+#                                    (~/.claude/skills, ~/.codex/skills, ~/.cursor/skills)
+#   ./install.sh --project [PATH]    install into a project's skill roots
+#                                    (.claude/skills, .codex/skills, .cursor/skills)
 #   ./install.sh --link [--user|--project [PATH]]
 #                                    symlink the checkout instead of copying —
 #                                    for the machine you AUTHOR the skill on, so
@@ -49,8 +50,8 @@ while [ $# -gt 0 ]; do
     --project) SCOPE="project"; shift; [ $# -gt 0 ] && [[ "$1" != --* ]] && { PROJECT="$1"; shift; } ;;
     --update)  UPDATE=1; shift ;;
     --link)    LINK=1; shift ;;
-    # 2,16 is the header comment block — it ends at "Default scope", just before `set -euo`.
-    -h|--help) { [ -r "$SELF" ] && sed -n '2,16p' "$SELF"; } || echo "usage: install.sh [--link] [--update] [--user | --project [PATH]]"; exit 0 ;;
+    # 2,17 is the header comment block — it ends at "Default scope", just before `set -euo`.
+    -h|--help) { [ -r "$SELF" ] && sed -n '2,17p' "$SELF"; } || echo "usage: install.sh [--link] [--update] [--user | --project [PATH]]"; exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 1 ;;
   esac
 done
@@ -133,15 +134,19 @@ install_skills() {  # $1 = destination skills root
 VERB="installing"; [ "$UPDATE" = 1 ] && VERB="updating"
 [ "$LINK" = 1 ] && VERB="linking"
 
-# Installs into the Claude skill root. The skill runs as orchestrator in Claude Code or
-# Grok (compatibility lists both); Grok already loads ~/.claude/skills. Installing into a
-# Codex skill root would advertise a surface that cannot actually run the skill.
+# Claude Code, Codex, and Cursor each have their own skill root. Grok already
+# loads ~/.claude/skills, so it does not need a fourth copy. --link makes all
+# three roots point at the same checkout.
 if [ "$SCOPE" = "user" ]; then
-  echo "▸ $VERB tlahcuilo at USER level"
-  install_skills "$HOME/.claude/skills"
+  echo "▸ $VERB tlahcuilo at USER level (Claude, Codex, Cursor)"
+  for root in "$HOME/.claude/skills" "$HOME/.codex/skills" "$HOME/.cursor/skills"; do
+    install_skills "$root"
+  done
 else
-  echo "▸ $VERB tlahcuilo into PROJECT: $PROJECT"
-  install_skills "$PROJECT/.claude/skills"
+  echo "▸ $VERB tlahcuilo into PROJECT: $PROJECT (Claude, Codex, Cursor)"
+  for root in "$PROJECT/.claude/skills" "$PROJECT/.codex/skills" "$PROJECT/.cursor/skills"; do
+    install_skills "$root"
+  done
 fi
 
 # --- voice registers: prepare the home, report the gaps -------------------
@@ -190,7 +195,7 @@ echo ""
 echo "No project bootstrap needed — the skill creates .write/ and its profile on first run."
 if [ "${#missing[@]}" -gt 0 ]; then
   echo ""
-  echo "Next: build the registers you actually need. In Claude Code, run"
+  echo "Next: build the registers you actually need. In Claude Code, Codex, Cursor, or Grok, run"
   echo "    /tlahcuilo registers"
   echo "and it will, per doc type, either read 2-3 of your past pieces of that kind or ask you"
   echo "4-5 questions, then write the overlay to $REGISTERS_DIR."

@@ -12,6 +12,8 @@ license: MIT
 compatibility:
   - claude-code
   - grok
+  - codex
+  - cursor
 allowed-tools:
   - Read
   - Write
