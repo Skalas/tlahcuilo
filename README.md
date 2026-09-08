@@ -10,7 +10,7 @@ sounds like you rather than like a committee.
 
 ```
 brief ─┐                                    ┌─ mode: debate → argue the draft
-       ├─ draft (yours or Claude's) ────────┤
+       ├─ draft (yours or the orchestrator's) ──┤
        │                                    └─ mode: joust  → models draft, then judge
        ▼
   DEBATE ROUNDS (Claude ⇄ Grok ⇄ Cursor, rebuttals)
@@ -47,9 +47,9 @@ repo — no copy to drift, no re-install step, and `git diff` shows what a sessi
 
 | | required | why |
 |---|---|---|
-| `grok` or `codex` | **one of them** | every tier needs at least one external voice; default is grok, codex substitutes if grok is missing |
-| `cursor-agent` | no | its absence degrades `panel`/`full` runs to the `duet` tier |
-| `claude` | no | in-session when this harness is Claude; spawned via `claude -p` otherwise (`claude-voice` always spawns) |
+| `grok` or `codex` | **one of them** | shipped other-lab voice; runtime alias if the seated CLI is missing |
+| `claude` | when spawning | required on a non-Claude harness for a seated `claude` / `claude-voice`; in-session on Claude Code |
+| `cursor-agent` | no | drop the cursor seat; continue if two voting voices remain |
 
 ## Voice data lives outside this repo
 

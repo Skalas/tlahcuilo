@@ -2,23 +2,22 @@
 # Copy to .write/profile.yml and fill. Keep only panelists whose CLI is installed.
 project: ""                          # optional label
 
-# Who sits on the debate panel. A matching-harness seat is in-session when
-# `orchestrator: voice` (see ADAPTERS.md → In-session vs spawn). `claude-voice` always
-# spawns via `claude -p` — that is how you get a Claude voice independent of the
-# orchestrator. `model:` is honored as -m / --model when the seat is spawned.
+# Seat ids `claude` and `claude-voice` share panel.backend `claude` and ADAPTERS.md → claude.
+# `claude-voice` always spawns (`claude -p`); it is not a model: value. Matching-harness
+# seats are in-session when orchestrator: voice (ADAPTERS.md → In-session vs spawn).
 panel:
-  - backend: claude                  # Anthropic. In-session if this harness is Claude;
-    role: voice                      # spawned (`claude -p`) otherwise. Seat as `claude`
-    model: ""                        # or `claude-voice` (always spawned). empty → omit --model
-  - backend: grok                    # xAI via `grok` — default external voice
+  - backend: claude                  # Anthropic via `claude -p` when spawned
+    role: voice
+    model: ""                        # empty → omit --model (account default)
+  - backend: grok                    # xAI via `grok` — default other-lab voice
     role: voice
     model: grok-4.6
   - backend: cursor                  # Composer via cursor-agent
     role: voice
     model: composer-2.5
-  # - backend: codex                 # GPT via `codex exec`. Uncomment AND add `codex` to
-  #   role: voice                    # the tier `panelists:` you want it on. Substitutes any
-  #   model: ""                      # `grok` seat automatically when `grok` is missing.
+  # - backend: codex                 # GPT via `codex exec`. Uncomment to seat it
+  #   role: voice                    # explicitly. Also the runtime alias when a
+  #   model: ""                      # seated grok CLI is missing (ADAPTERS.md).
 
 # Complexity tiers — picked at the start of each run (Step 1b). The tier sets panel size,
 # rounds, and whether the orchestrator is a VOICE or a NEUTRAL MODERATOR (no vote).
@@ -50,7 +49,7 @@ joust:
   scale: 5
 
 writer:
-  backend: claude                    # the orchestrator session applies edits — not a spawned panelist
+  backend: session                   # this harness applies edits; never spawn a panelist to write
 
 voice:
   enabled: true

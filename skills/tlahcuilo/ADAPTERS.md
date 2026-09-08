@@ -11,7 +11,8 @@ Three call shapes:
   it returns JSON matching `position.schema.json`. Capture the session id to resume it.
 - **rebuttal** (round ≥ 2) — RESUME the same session with the digest of others' positions.
   Continuity is the point: the model argues against the actual prior exchange.
-- **draft / merge** (joust, or the `writer` backend) — WRITE mode, to an isolated file.
+- **draft / merge** (joust) — WRITE mode, to an isolated file. Synthesis is this
+  session (`writer.backend: session`), never a spawned panelist.
 
 ### In-session vs spawn
 
@@ -31,7 +32,13 @@ The seat **`claude-voice` always spawns** (`claude -p`), even when this session 
 That is the `full`-tier bias control (referee is not a player), and it is how you seat a
 Claude voice that is independent of the orchestrator in any tier.
 
-The in-session voice does not need its CLI installed. A spawned seat does.
+The in-session seat needs no CLI. Every spawned seat does — including this harness's
+backend when `orchestrator: moderator` (a Grok-hosted `full` must spawn `grok`).
+
+**Grok ↔ Codex alias (runtime, do not rewrite the profile).** If a seated `grok` CLI is
+missing and `codex` is present, run the **codex** adapter for that seat and set
+`"panelist":"codex"`. Mirror if a seated `codex` CLI is missing and `grok` is present.
+Say so in the run output.
 
 Always tell each panelist: *"Respond with ONLY a JSON object matching this schema. No prose
 outside the JSON."* Then parse with `jq`. Extracted positions go in `.write/positions/`;
@@ -103,20 +110,19 @@ Rules:
 ## claude — Anthropic voice
 
 `$CLAUDE_MODEL` = the panelist's `model:` in the profile (empty → omit `--model`; the account
-default is used). `$SEAT` is the tier seat: `claude` or `claude-voice` (see In-session vs spawn).
+default is used). `$SEAT` is the tier seat: `claude` or `claude-voice`. Both seats share this
+adapter and `panel.backend: claude`. `claude-voice` is a seat id, not a `model:` value.
 
-- **In-session** — this harness is Claude, `orchestrator: voice`, seat is `claude`. Write
-  positions/rebuttals **directly** as JSON with `"panelist":"claude"`. Do not spawn.
-- **Spawned** — seat is `claude-voice`, or `orchestrator: moderator`, or this harness is not
-  Claude. `claude -p`, self-reporting `"panelist":"$SEAT"`. The `full` tier seats `claude-voice`
-  so the moderator is not also a player; seat `claude-voice` in any tier to get a Claude voice
-  independent of the orchestrator.
+**In-session** only when this harness is Claude **and** `orchestrator: voice` **and** the seat
+is `claude` — write JSON with `"panelist":"claude"`, do not spawn. **Otherwise spawn**
+(`claude -p`, `"panelist":"$SEAT"`).
 
 ```bash
 # critique (round 1): READ-ONLY. Prompt goes to a FILE first (see Verbatim relay).
 # --output-format json wraps the reply: message in .result, id in .session_id.
 # $SEAT is claude-voice (always-spawned) or claude (spawned from a non-Claude harness).
 claude -p --output-format json ${CLAUDE_MODEL:+--model "$CLAUDE_MODEL"} \
+  --disallowed-tools "Write,Edit,MultiEdit,NotebookEdit,Bash" \
   "$(cat .write/positions/raw/r1.$SEAT.prompt.txt)" \
   > .write/positions/raw/r1.$SEAT.json 2>/dev/null
 SID_CLAUDE="$(jq -r '.session_id' .write/positions/raw/r1.$SEAT.json)"
@@ -125,6 +131,7 @@ jq -r '.result' .write/positions/raw/r1.$SEAT.json \
 
 # rebuttal (round 2+): resume the SAME session with the verbatim digest of the OTHER voices.
 claude -p --resume "$SID_CLAUDE" --output-format json ${CLAUDE_MODEL:+--model "$CLAUDE_MODEL"} \
+  --disallowed-tools "Write,Edit,MultiEdit,NotebookEdit,Bash" \
   "$(cat .write/positions/raw/r2.$SEAT.prompt.txt)" \
   > .write/positions/raw/r2.$SEAT.json 2>/dev/null
 jq -r '.result' .write/positions/raw/r2.$SEAT.json \
@@ -271,10 +278,12 @@ grok --resume "$SID_GROK" --prompt-file .write/positions/raw/r2.grok.prompt.txt 
 jq -r '.text' .write/positions/raw/r2.grok.json \
   | sed -n '/^{/,$p' | sed '/^```/d' > .write/positions/r2.grok.json
 
-# draft (joust): WRITE mode. Do not pass --disallowed-tools. Headless --worktree does not
-# create a worktree — under isolation:worktree, create it yourself and pass --cwd (see Isolation).
+# draft (joust): WRITE mode. --always-approve so headless does not hang on Ask;
+# keep Bash off so a hostile brief cannot run shell. Under isolation:worktree,
+# create the tree yourself and pass --cwd (see Isolation).
 grok --prompt-file .write/positions/raw/draft.grok.prompt.txt \
      -m "$GROK_MODEL" --cwd "$PWD" \
+     --always-approve --disallowed-tools "Bash" \
      > .write/drafts/.grok.log 2>/dev/null
 ```
 
@@ -288,9 +297,9 @@ call must not be able to write; removing the tools is the direct control.
 ## Isolation — bounding write-mode calls (`output.isolation`)
 
 Critique and rebuttal are read-only and safe. **Write mode** (joust drafts, and any future
-writer-role backend) is the exposure: `-s workspace-write` / `--force` / an unrestricted grok
-call grant the whole tree, so the "write to `drafts/<panelist>.md` only" line in the prompt is
-a request, not a boundary.
+writer-role backend) is the exposure: `-s workspace-write` / `--force` / grok
+`--always-approve` grant the whole tree (Bash stays disallowed on grok), so the
+"write to `drafts/<panelist>.md` only" line in the prompt is a request, not a boundary.
 
 - **`isolation: worktree`** (recommended for joust) — run each write call in a throwaway
   `git worktree`, then copy the produced `.md` back and remove the tree. A runaway write is
@@ -300,9 +309,14 @@ a request, not a boundary.
   ( cd .write/wt-codex && codex exec -s workspace-write ... )   # resume has no -C: cd in
   cp .write/wt-codex/.write/drafts/codex.md .write/drafts/codex.md 2>/dev/null
   git worktree remove --force .write/wt-codex
-  # grok: headless --worktree is a no-op — create the tree yourself and pass --cwd:
-  #   git worktree add -q .write/wt-grok HEAD
-  #   grok --prompt-file ... --cwd .write/wt-grok
+  # grok: headless --worktree is a no-op — create the tree, --cwd it, absolute prompt path:
+  git worktree add -q .write/wt-grok HEAD
+  grok --prompt-file "$PWD/.write/positions/raw/draft.grok.prompt.txt" \
+       -m "$GROK_MODEL" --cwd "$PWD/.write/wt-grok" \
+       --always-approve --disallowed-tools "Bash" \
+       > .write/drafts/.grok.log 2>/dev/null
+  cp .write/wt-grok/.write/drafts/grok.md .write/drafts/grok.md 2>/dev/null
+  git worktree remove --force .write/wt-grok
   ```
 - **`isolation: off`** — run the write call in place, then guard: `git diff --name-only` and
   **abort synthesis** if anything but the intended draft/target changed. Only viable in a git repo;

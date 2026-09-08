@@ -56,32 +56,31 @@ while [ $# -gt 0 ]; do
 done
 
 # --- prerequisites: panelist CLIs -----------------------------------------
-# Every tier needs at least one external voice — `grok` or `codex` (SKILL.md, Step 1b).
-# The shipped default is grok. Missing both is fatal. `cursor-agent` is optional: its
-# absence only degrades panel/full → duet, which the skill handles at runtime. Codex
-# substitutes any `grok` seat when grok is missing, so a codex-only install is a valid panel.
+# Shipped other-lab voice is grok or codex (SKILL.md, Step 1b). Missing both is fatal.
+# Claude CLI is required only to spawn Claude from a non-Claude harness. cursor-agent
+# is optional: drop the cursor seat; continue if two voting voices remain.
 have_codex=0; have_grok=0
 command -v codex >/dev/null 2>&1 && have_codex=1
 command -v grok  >/dev/null 2>&1 && have_grok=1
 if [ "$have_codex" -eq 0 ] && [ "$have_grok" -eq 0 ]; then
-  echo "✗ prerequisite missing: need at least one of grok or codex (an external voice)" >&2
-  echo "    every tier needs an external voice besides Claude (SKILL.md, Step 1b)" >&2
+  echo "✗ prerequisite missing: need at least one of grok or codex (shipped other-lab voice)" >&2
+  echo "    Claude CLI is required only to spawn Claude from a non-Claude harness" >&2
   echo "    install the Grok CLI or the Codex CLI, then re-run this installer" >&2
   exit 1
 fi
-[ "$have_grok"  -eq 1 ] && echo "▸ prerequisite ok: grok found — default external voice"
+[ "$have_grok"  -eq 1 ] && echo "▸ prerequisite ok: grok found — default other-lab voice"
 [ "$have_codex" -eq 1 ] && echo "▸ prerequisite ok: codex found"
-[ "$have_grok"  -eq 0 ] && echo "▸ optional missing: grok — codex will sit the external-voice seat"
-[ "$have_codex" -eq 0 ] && echo "▸ optional missing: codex — extra GPT voice, or a substitute if you run without grok"
+[ "$have_grok"  -eq 0 ] && echo "▸ optional missing: grok — runtime alias to codex for seated grok"
+[ "$have_codex" -eq 0 ] && echo "▸ optional missing: codex — extra GPT voice, or a substitute if grok is missing"
 if command -v claude >/dev/null 2>&1; then
   echo "▸ optional ok: claude found — can spawn a Claude voice from a non-Claude orchestrator"
 else
-  echo "▸ optional missing: claude — a non-Claude orchestrator cannot seat a spawned Claude voice"
+  echo "▸ optional missing: claude — required to spawn Claude from a non-Claude harness"
 fi
 if command -v cursor-agent >/dev/null 2>&1; then
-  echo "▸ optional ok: cursor-agent found — panel/full tiers available"
+  echo "▸ optional ok: cursor-agent found — panel/full third seat available"
 else
-  echo "▸ optional missing: cursor-agent — runs will degrade to the duet tier"
+  echo "▸ optional missing: cursor-agent — drop the cursor seat; continue if two voices remain"
 fi
 
 # --- external dependency: the base voice fingerprint ----------------------

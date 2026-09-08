@@ -79,26 +79,35 @@ for seat in $seats; do
 done
 [ -n "$seats" ] || bad "no tier panelists found in $PROFILE"
 
-# --- 3c. grok is the shipped default external voice -----------------------
-# Shipped duet is Claude + Grok. If the schema rejects grok, a grok turn fails
+# --- 3c. grok is the shipped default other-lab voice ----------------------
+# Shipped duet seats claude + grok. If the schema rejects grok, a grok turn fails
 # validation. If SKILL.md still hard-requires a named CLI, a grok-only (or
 # codex-only) install has no valid tier. If install.sh still exits 1 on missing
-# grok alone, a codex-only install cannot substitute.
+# grok alone, a codex-only install cannot alias.
 grep -q '"grok"' "$SKILL/position.schema.json" \
   || bad "grok missing from position.schema.json panelist enum"
 grep -q '^## grok' "$SKILL/ADAPTERS.md" \
   || bad "ADAPTERS.md has no grok section"
 grep -q 'Every tier requires' "$SKILL/SKILL.md" \
   && bad "SKILL.md still hard-requires a named CLI for every tier — grok-only installs have no valid tier"
+grep -q 'fewer than two voting voices' "$SKILL/SKILL.md" \
+  || bad "SKILL.md lost the two-voice floor"
 grep -q 'command -v grok' "$ROOT/install.sh" \
   || bad "install.sh does not detect grok"
 grep -Eq 'grok or codex|codex or grok' "$ROOT/install.sh" \
-  || bad "install.sh fatal path does not admit grok or codex as the external voice"
+  || bad "install.sh fatal path does not admit grok or codex as the other-lab voice"
 grep -q 'backend: grok' "$PROFILE" \
   || bad "profile.template.yml has no grok panel entry"
 grep -q 'panelists: \[claude, grok\]' "$PROFILE" \
-  || bad "shipped duet is not Claude + Grok"
-[ "$fail" -eq 0 ] && note "✓ grok is the shipped default external voice (schema, adapter, skill, installer, profile)"
+  || bad "shipped duet is not claude + grok"
+# Grok draft must grant writes (or headless hangs on Ask) and must not pair -p with --prompt-file.
+grok_ad="$(sed -n '/^## grok/,/^## Isolation/p' "$SKILL/ADAPTERS.md")"
+echo "$grok_ad" | grep -q -- '--always-approve' \
+  || bad "grok draft command is missing --always-approve (headless write grant)"
+if echo "$grok_ad" | grep -E '^[[:space:]]*grok ' | grep -Eq -- '(^|[[:space:]])-p([[:space:]]|$)|--single'; then
+  bad "grok adapter pairs --prompt-file with -p/--single (those flags are alternatives)"
+fi
+[ "$fail" -eq 0 ] && note "✓ grok is the shipped default other-lab voice (schema, adapter, skill, installer, profile)"
 
 # --- 3d. claude is a configurable spawned voice, not only the orchestrator --
 # Claude used to be hardcoded as "this session". If the spawn path disappears,
@@ -114,6 +123,10 @@ grep -q 'command -v claude' "$ROOT/install.sh" \
   || bad "install.sh does not detect the claude CLI (needed to spawn Claude)"
 grep -A3 'backend: claude' "$PROFILE" | grep -q 'model:' \
   || bad "profile claude panelist has no model: field"
+grep -q 'backend: session' "$PROFILE" \
+  || bad "writer.backend is not session — a Grok orchestrator would spawn Claude to write"
+sed -n '/^## claude/,/^## codex/p' "$SKILL/ADAPTERS.md" | grep -q -- '--disallowed-tools' \
+  || bad "spawned Claude critique/rebuttal has no --disallowed-tools"
 [ "$fail" -eq 0 ] && note "✓ claude is a configurable voice (in-session or spawned)"
 
 # --- 3b. installer and profile agree on where registers live --------------
