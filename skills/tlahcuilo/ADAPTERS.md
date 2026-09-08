@@ -27,6 +27,8 @@ seat is spawned via the adapter below.
 |---|---|---|
 | Claude Code | `claude` | yes — `"panelist":"claude"` |
 | Grok | `grok` | yes — `"panelist":"grok"` |
+| Codex | `codex` | yes — `"panelist":"codex"` |
+| Cursor | `cursor` | yes — `"panelist":"cursor"` |
 
 The seat **`claude-voice` always spawns** (`claude -p`), even when this session is Claude.
 That is the `full`-tier bias control (referee is not a player), and it is how you seat a
