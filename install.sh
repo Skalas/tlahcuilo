@@ -56,20 +56,36 @@ while [ $# -gt 0 ]; do
 done
 
 # --- prerequisites: panelist CLIs -----------------------------------------
-# Every tier needs `codex` — without it there is no valid panel (SKILL.md, Step 1b), so
-# a missing codex is fatal. `cursor-agent` is optional: its absence only degrades
-# panel/full → duet, which the skill handles at runtime.
-if command -v codex >/dev/null 2>&1; then
-  echo "▸ prerequisite ok: codex found — every tier can run"
-else
-  echo "✗ prerequisite missing: codex (required — every tier includes it as a panelist)" >&2
-  echo "    install the Codex CLI, then re-run this installer" >&2
+# Fatal when fewer than two runnable voices exist (SKILL.md, Step 1b). Claude Code
+# in-session counts as one. The claude CLI does NOT — that would certify
+# Claude+Claude-voice as a debate. Each of grok, codex, and cursor-agent is a
+# second mind. grok or codex is the shipped other-lab voice — warn if both are
+# missing; Claude+Cursor is still valid.
+have_codex=0; have_grok=0; have_claude=0; have_cursor=0
+command -v codex >/dev/null 2>&1 && have_codex=1
+command -v grok  >/dev/null 2>&1 && have_grok=1
+command -v claude >/dev/null 2>&1 && have_claude=1
+command -v cursor-agent >/dev/null 2>&1 && have_cursor=1
+runnable=1   # this installer targets ~/.claude/skills → Claude Code in-session
+[ "$have_grok"   -eq 1 ] && runnable=$((runnable + 1))
+[ "$have_codex"  -eq 1 ] && runnable=$((runnable + 1))
+[ "$have_cursor" -eq 1 ] && runnable=$((runnable + 1))
+if [ "$runnable" -lt 2 ]; then
+  echo "✗ prerequisite missing: fewer than two runnable voices" >&2
+  echo "    need the in-session seat plus at least one of grok, codex, or cursor-agent" >&2
+  echo "    install a second CLI, then re-run this installer" >&2
   exit 1
 fi
-if command -v cursor-agent >/dev/null 2>&1; then
-  echo "▸ optional ok: cursor-agent found — panel/full tiers available"
-else
-  echo "▸ optional missing: cursor-agent — runs will degrade to the duet tier"
+[ "$have_grok"   -eq 1 ] && echo "▸ prerequisite ok: grok found — default other-lab voice"
+[ "$have_codex"  -eq 1 ] && echo "▸ prerequisite ok: codex found"
+[ "$have_claude" -eq 1 ] && echo "▸ optional ok: claude found — can spawn a Claude voice from a non-Claude orchestrator"
+[ "$have_cursor" -eq 1 ] && echo "▸ optional ok: cursor-agent found — panel/full third seat available"
+[ "$have_grok"   -eq 0 ] && echo "▸ optional missing: grok — runtime alias to codex for seated grok"
+[ "$have_codex"  -eq 0 ] && echo "▸ optional missing: codex — extra GPT voice, or a substitute if grok is missing"
+[ "$have_claude" -eq 0 ] && echo "▸ optional missing: claude — required to spawn Claude from a non-Claude harness"
+[ "$have_cursor" -eq 0 ] && echo "▸ optional missing: cursor-agent — drop the cursor seat; continue if two voices remain"
+if [ "$have_grok" -eq 0 ] && [ "$have_codex" -eq 0 ]; then
+  echo "▸ warning: grok or codex missing — no other-lab voice; shipped default is grok"
 fi
 
 # --- external dependency: the base voice fingerprint ----------------------
@@ -117,10 +133,9 @@ install_skills() {  # $1 = destination skills root
 VERB="installing"; [ "$UPDATE" = 1 ] && VERB="updating"
 [ "$LINK" = 1 ] && VERB="linking"
 
-# Claude-only, unlike metate: SKILL.md declares `compatibility: claude-code` and the
-# pipeline is written around a Claude session as orchestrator (it spawns codex/cursor as
-# panelists). Installing into a Codex skill root would advertise a surface that cannot
-# actually run the skill.
+# Installs into the Claude skill root. The skill runs as orchestrator in Claude Code or
+# Grok (compatibility lists both); Grok already loads ~/.claude/skills. Installing into a
+# Codex skill root would advertise a surface that cannot actually run the skill.
 if [ "$SCOPE" = "user" ]; then
   echo "▸ $VERB tlahcuilo at USER level"
   install_skills "$HOME/.claude/skills"
