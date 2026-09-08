@@ -57,9 +57,10 @@ done
 
 # --- prerequisites: panelist CLIs -----------------------------------------
 # Fatal when fewer than two runnable voices exist (SKILL.md, Step 1b). Claude Code
-# in-session counts as one; each of grok, codex, cursor-agent, and the claude CLI
-# (spawned claude-voice) counts as another. grok or codex is the shipped other-lab
-# voice — warn if both are missing, but Claude+Cursor is still a valid two-voice run.
+# in-session counts as one. The claude CLI does NOT — that would certify
+# Claude+Claude-voice as a debate. Each of grok, codex, and cursor-agent is a
+# second mind. grok or codex is the shipped other-lab voice — warn if both are
+# missing; Claude+Cursor is still valid.
 have_codex=0; have_grok=0; have_claude=0; have_cursor=0
 command -v codex >/dev/null 2>&1 && have_codex=1
 command -v grok  >/dev/null 2>&1 && have_grok=1
@@ -69,10 +70,9 @@ runnable=1   # this installer targets ~/.claude/skills → Claude Code in-sessio
 [ "$have_grok"   -eq 1 ] && runnable=$((runnable + 1))
 [ "$have_codex"  -eq 1 ] && runnable=$((runnable + 1))
 [ "$have_cursor" -eq 1 ] && runnable=$((runnable + 1))
-[ "$have_claude" -eq 1 ] && runnable=$((runnable + 1))
 if [ "$runnable" -lt 2 ]; then
   echo "✗ prerequisite missing: fewer than two runnable voices" >&2
-  echo "    need the in-session seat plus at least one of grok, codex, cursor-agent, or claude" >&2
+  echo "    need the in-session seat plus at least one of grok, codex, or cursor-agent" >&2
   echo "    install a second CLI, then re-run this installer" >&2
   exit 1
 fi

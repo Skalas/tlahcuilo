@@ -96,6 +96,9 @@ grep -q 'command -v grok' "$ROOT/install.sh" \
   || bad "install.sh does not detect grok"
 grep -q 'fewer than two runnable voices' "$ROOT/install.sh" \
   || bad "install.sh fatal path is not the two-voice floor"
+if grep -E 'have_claude.*runnable|runnable.*have_claude' "$ROOT/install.sh" | grep -q .; then
+  bad "installer counts the claude CLI toward the two-voice floor (Claude+Claude-voice)"
+fi
 grep -Eq 'grok or codex|codex or grok' "$ROOT/install.sh" \
   || bad "install.sh no longer mentions grok or codex as the other-lab voice"
 grep -q 'backend: grok' "$PROFILE" \
@@ -134,6 +137,10 @@ echo "$claude_ad" | grep -q -- '--permission-mode acceptEdits' \
   || bad "spawned Claude draft has no --permission-mode acceptEdits (headless write grant)"
 grep -q 'draft missing' "$SKILL/ADAPTERS.md" \
   || bad "worktree copy-back still swallows a missing draft (2>/dev/null)"
+grep -q 'wt-claude' "$SKILL/ADAPTERS.md" \
+  || bad "no spawned-Claude worktree joust recipe (absolute prompt + copy-back)"
+grep -q 'Keep only panelists whose CLI is installed' "$PROFILE" \
+  && bad "profile header still tells Step 0 to drop missing CLIs"
 [ "$fail" -eq 0 ] && note "✓ claude is a configurable voice (in-session or spawned)"
 
 # --- 3b. installer and profile agree on where registers live --------------

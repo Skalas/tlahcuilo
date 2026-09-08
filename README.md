@@ -47,7 +47,7 @@ repo — no copy to drift, no re-install step, and `git diff` shows what a sessi
 
 | | required | why |
 |---|---|---|
-| two runnable voices | **yes** | in-session seat plus any of grok, codex, cursor-agent, spawned claude; stop below two |
+| two runnable voices | **yes** | in-session seat plus grok, codex, or cursor-agent; the claude CLI does not count (same lab) |
 | `grok` or `codex` | other-lab | shipped default; warn if both missing (Claude + Cursor still runs) |
 | `claude` | when spawning | required on a non-Claude harness for a seated `claude` / `claude-voice`; in-session on Claude Code |
 | `cursor-agent` | no | drop the cursor seat; counts toward the two-voice floor |

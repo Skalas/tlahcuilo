@@ -324,6 +324,18 @@ writer-role backend) is the exposure: `-s workspace-write` / `--force` / grok
   if [ -f "$src" ]; then cp "$src" .write/drafts/grok.md
   else echo "draft missing for grok — seat failed" >&2; fi
   git worktree remove --force .write/wt-grok
+  # claude: no --cwd; cd the tree and cat the prompt from the main repo (absolute).
+  MAIN="$PWD"
+  git worktree add -q .write/wt-claude HEAD
+  mkdir -p .write/wt-claude/.write/drafts .write/drafts
+  ( cd .write/wt-claude && claude -p --output-format json ${CLAUDE_MODEL:+--model "$CLAUDE_MODEL"} \
+      --permission-mode acceptEdits --disallowed-tools "Bash" \
+      "$(cat "$MAIN/.write/positions/raw/draft.$SEAT.prompt.txt")" \
+      > "$MAIN/.write/drafts/.$SEAT.log" 2>/dev/null )
+  src=.write/wt-claude/.write/drafts/$SEAT.md
+  if [ -f "$src" ]; then cp "$src" .write/drafts/$SEAT.md
+  else echo "draft missing for $SEAT — seat failed" >&2; fi
+  git worktree remove --force .write/wt-claude
   ```
 - **`isolation: off`** — run the write call in place, then guard: `git diff --name-only` and
   **abort synthesis** if anything but the intended draft/target changed. Only viable in a git repo;

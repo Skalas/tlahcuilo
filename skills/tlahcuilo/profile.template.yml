@@ -1,5 +1,6 @@
 # .write/profile.yml — tlahcuilo writing-panel config
-# Copy to .write/profile.yml and fill. Keep only panelists whose CLI is installed.
+# Copy to .write/profile.yml and fill. Seat what you want; a missing CLI is handled
+# at runtime (ADAPTERS.md → In-session vs spawn). Do not drop panelists here.
 project: ""                          # optional label
 
 # Seat ids `claude` and `claude-voice` share panel.backend `claude` and ADAPTERS.md → claude.
