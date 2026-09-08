@@ -137,10 +137,11 @@ claude -p --resume "$SID_CLAUDE" --output-format json ${CLAUDE_MODEL:+--model "$
 jq -r '.result' .write/positions/raw/r2.$SEAT.json \
   | sed -n '/^{/,$p' | sed '/^```/d' > .write/positions/r2.$SEAT.json
 
-# draft (joust): WRITE mode, only when Claude is spawned. Never --dangerously-skip-permissions
-# (that flag is for autonomous builds; it does not belong on a panelist). Under
-# isolation:worktree, create the tree and run from there (see Isolation).
+# draft (joust): WRITE mode, only when Claude is spawned. --permission-mode acceptEdits
+# so headless can write; Bash stays off. Never --dangerously-skip-permissions.
+# Under isolation:worktree, create the tree and run from there (see Isolation).
 claude -p --output-format json ${CLAUDE_MODEL:+--model "$CLAUDE_MODEL"} \
+  --permission-mode acceptEdits --disallowed-tools "Bash" \
   "$(cat .write/positions/raw/draft.$SEAT.prompt.txt)" \
   > .write/drafts/.$SEAT.log 2>/dev/null
 ```
@@ -306,16 +307,22 @@ writer-role backend) is the exposure: `-s workspace-write` / `--force` / grok
   physically confined and shows up in `git diff`.
   ```bash
   git worktree add -q .write/wt-codex HEAD
+  mkdir -p .write/wt-codex/.write/drafts .write/drafts
   ( cd .write/wt-codex && codex exec -s workspace-write ... )   # resume has no -C: cd in
-  cp .write/wt-codex/.write/drafts/codex.md .write/drafts/codex.md 2>/dev/null
+  src=.write/wt-codex/.write/drafts/codex.md
+  if [ -f "$src" ]; then cp "$src" .write/drafts/codex.md
+  else echo "draft missing for codex — seat failed" >&2; fi
   git worktree remove --force .write/wt-codex
   # grok: headless --worktree is a no-op — create the tree, --cwd it, absolute prompt path:
   git worktree add -q .write/wt-grok HEAD
+  mkdir -p .write/wt-grok/.write/drafts .write/drafts
   grok --prompt-file "$PWD/.write/positions/raw/draft.grok.prompt.txt" \
        -m "$GROK_MODEL" --cwd "$PWD/.write/wt-grok" \
        --always-approve --disallowed-tools "Bash" \
        > .write/drafts/.grok.log 2>/dev/null
-  cp .write/wt-grok/.write/drafts/grok.md .write/drafts/grok.md 2>/dev/null
+  src=.write/wt-grok/.write/drafts/grok.md
+  if [ -f "$src" ]; then cp "$src" .write/drafts/grok.md
+  else echo "draft missing for grok — seat failed" >&2; fi
   git worktree remove --force .write/wt-grok
   ```
 - **`isolation: off`** — run the write call in place, then guard: `git diff --name-only` and

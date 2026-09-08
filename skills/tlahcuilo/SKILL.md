@@ -196,8 +196,8 @@ Two rules the tier enforces:
 Compute **runnable** seats: in-session match (when `orchestrator: voice`) plus installed
 CLIs, applying the grok↔codex runtime alias (`ADAPTERS.md` → In-session vs spawn). Drop
 unrunnable seats and say what was dropped. **Stop if fewer than two voting voices remain**
-— one mind is not a debate. If cursor is gone, call the run `duet` when two voices remain.
-Do not rename `full` → `panel` just because a seat dropped.
+— one mind is not a debate. Report a thinned roster as `<tier> (degraded, N voices)` —
+do not rename `full` to `duet`/`panel`; a degraded `full` still has a neutral moderator.
 
 ---
 

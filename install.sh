@@ -56,31 +56,36 @@ while [ $# -gt 0 ]; do
 done
 
 # --- prerequisites: panelist CLIs -----------------------------------------
-# Shipped other-lab voice is grok or codex (SKILL.md, Step 1b). Missing both is fatal.
-# Claude CLI is required only to spawn Claude from a non-Claude harness. cursor-agent
-# is optional: drop the cursor seat; continue if two voting voices remain.
-have_codex=0; have_grok=0
+# Fatal when fewer than two runnable voices exist (SKILL.md, Step 1b). Claude Code
+# in-session counts as one; each of grok, codex, cursor-agent, and the claude CLI
+# (spawned claude-voice) counts as another. grok or codex is the shipped other-lab
+# voice — warn if both are missing, but Claude+Cursor is still a valid two-voice run.
+have_codex=0; have_grok=0; have_claude=0; have_cursor=0
 command -v codex >/dev/null 2>&1 && have_codex=1
 command -v grok  >/dev/null 2>&1 && have_grok=1
-if [ "$have_codex" -eq 0 ] && [ "$have_grok" -eq 0 ]; then
-  echo "✗ prerequisite missing: need at least one of grok or codex (shipped other-lab voice)" >&2
-  echo "    Claude CLI is required only to spawn Claude from a non-Claude harness" >&2
-  echo "    install the Grok CLI or the Codex CLI, then re-run this installer" >&2
+command -v claude >/dev/null 2>&1 && have_claude=1
+command -v cursor-agent >/dev/null 2>&1 && have_cursor=1
+runnable=1   # this installer targets ~/.claude/skills → Claude Code in-session
+[ "$have_grok"   -eq 1 ] && runnable=$((runnable + 1))
+[ "$have_codex"  -eq 1 ] && runnable=$((runnable + 1))
+[ "$have_cursor" -eq 1 ] && runnable=$((runnable + 1))
+[ "$have_claude" -eq 1 ] && runnable=$((runnable + 1))
+if [ "$runnable" -lt 2 ]; then
+  echo "✗ prerequisite missing: fewer than two runnable voices" >&2
+  echo "    need the in-session seat plus at least one of grok, codex, cursor-agent, or claude" >&2
+  echo "    install a second CLI, then re-run this installer" >&2
   exit 1
 fi
-[ "$have_grok"  -eq 1 ] && echo "▸ prerequisite ok: grok found — default other-lab voice"
-[ "$have_codex" -eq 1 ] && echo "▸ prerequisite ok: codex found"
-[ "$have_grok"  -eq 0 ] && echo "▸ optional missing: grok — runtime alias to codex for seated grok"
-[ "$have_codex" -eq 0 ] && echo "▸ optional missing: codex — extra GPT voice, or a substitute if grok is missing"
-if command -v claude >/dev/null 2>&1; then
-  echo "▸ optional ok: claude found — can spawn a Claude voice from a non-Claude orchestrator"
-else
-  echo "▸ optional missing: claude — required to spawn Claude from a non-Claude harness"
-fi
-if command -v cursor-agent >/dev/null 2>&1; then
-  echo "▸ optional ok: cursor-agent found — panel/full third seat available"
-else
-  echo "▸ optional missing: cursor-agent — drop the cursor seat; continue if two voices remain"
+[ "$have_grok"   -eq 1 ] && echo "▸ prerequisite ok: grok found — default other-lab voice"
+[ "$have_codex"  -eq 1 ] && echo "▸ prerequisite ok: codex found"
+[ "$have_claude" -eq 1 ] && echo "▸ optional ok: claude found — can spawn a Claude voice from a non-Claude orchestrator"
+[ "$have_cursor" -eq 1 ] && echo "▸ optional ok: cursor-agent found — panel/full third seat available"
+[ "$have_grok"   -eq 0 ] && echo "▸ optional missing: grok — runtime alias to codex for seated grok"
+[ "$have_codex"  -eq 0 ] && echo "▸ optional missing: codex — extra GPT voice, or a substitute if grok is missing"
+[ "$have_claude" -eq 0 ] && echo "▸ optional missing: claude — required to spawn Claude from a non-Claude harness"
+[ "$have_cursor" -eq 0 ] && echo "▸ optional missing: cursor-agent — drop the cursor seat; continue if two voices remain"
+if [ "$have_grok" -eq 0 ] && [ "$have_codex" -eq 0 ]; then
+  echo "▸ warning: grok or codex missing — no other-lab voice; shipped default is grok"
 fi
 
 # --- external dependency: the base voice fingerprint ----------------------

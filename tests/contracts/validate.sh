@@ -94,8 +94,10 @@ grep -q 'fewer than two voting voices' "$SKILL/SKILL.md" \
   || bad "SKILL.md lost the two-voice floor"
 grep -q 'command -v grok' "$ROOT/install.sh" \
   || bad "install.sh does not detect grok"
+grep -q 'fewer than two runnable voices' "$ROOT/install.sh" \
+  || bad "install.sh fatal path is not the two-voice floor"
 grep -Eq 'grok or codex|codex or grok' "$ROOT/install.sh" \
-  || bad "install.sh fatal path does not admit grok or codex as the other-lab voice"
+  || bad "install.sh no longer mentions grok or codex as the other-lab voice"
 grep -q 'backend: grok' "$PROFILE" \
   || bad "profile.template.yml has no grok panel entry"
 grep -q 'panelists: \[claude, grok\]' "$PROFILE" \
@@ -125,8 +127,13 @@ grep -A3 'backend: claude' "$PROFILE" | grep -q 'model:' \
   || bad "profile claude panelist has no model: field"
 grep -q 'backend: session' "$PROFILE" \
   || bad "writer.backend is not session — a Grok orchestrator would spawn Claude to write"
-sed -n '/^## claude/,/^## codex/p' "$SKILL/ADAPTERS.md" | grep -q -- '--disallowed-tools' \
+claude_ad="$(sed -n '/^## claude/,/^## codex/p' "$SKILL/ADAPTERS.md")"
+echo "$claude_ad" | grep -q -- '--disallowed-tools' \
   || bad "spawned Claude critique/rebuttal has no --disallowed-tools"
+echo "$claude_ad" | grep -q -- '--permission-mode acceptEdits' \
+  || bad "spawned Claude draft has no --permission-mode acceptEdits (headless write grant)"
+grep -q 'draft missing' "$SKILL/ADAPTERS.md" \
+  || bad "worktree copy-back still swallows a missing draft (2>/dev/null)"
 [ "$fail" -eq 0 ] && note "✓ claude is a configurable voice (in-session or spawned)"
 
 # --- 3b. installer and profile agree on where registers live --------------
